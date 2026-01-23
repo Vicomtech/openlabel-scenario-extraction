@@ -1,0 +1,27 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Entornos virtuales
+venv/
+.env
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# IDEs / editores
+.vscode/
+.idea/
+
+# Archivos de pruebas locales
+*.sqlite
+.coverage
+pytest_cache/
+.mypy_cache/

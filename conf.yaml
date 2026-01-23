@@ -1,0 +1,88 @@
+ontology:
+  pref: "synergies"
+  graph: "http://www.openrdf.org/Synergies/"
+  my_uri: "http://www.semanticweb.org/vicomtech/ontologies/synergies#"
+  ontology_path : "./Synergies.rdf"
+
+vcd: 
+  vcd_path: "./vcds_pruebas/"
+
+paths:
+  output_dir: "./vcds_pruebas_con_acciones_y_eventos/"
+
+database:
+  db_endpoint: "http://localhost:7600/repositories/Synergies/statements"
+  db_ip: "localhost"
+  db_port: "7600"
+  repository: "Synergies"
+
+endpoint_url: "http://localhost:7600/repositories/Synergies"
+
+
+api:
+  classes_url: "http://localhost:8085/getClasses"
+  repository_name: "Synergies"
+  ontology_name: "synergies"
+  ontology_uri: "http://www.semanticweb.org/vicomtech/ontologies/synergies#"
+  graphdb_url: "http://graphdb:7200"
+
+################################ CLASES, RELACIONES, ATRIBUTOS ############################
+
+
+#PUEDE NO ESTAR
+ego_vehicle:
+  ego_vehicle_name : ego_vehicle
+  ego_rotation: ego_rotation
+
+classes:
+  Dynamic: dynamic #API
+  #Movable: movable #API
+  Static: static #API
+  Scene: scene
+  EgoData: EgoData
+  ObjectData: ObjectData
+  Lane: LANE
+  Followed: Following
+
+relations:
+  hasEgoData : hasEgoData
+  hasData : hasData
+  hasObject : hasObject
+  isLocatedIn: isLocatedIn
+  isNextTo: isNextTo
+  isPartOf: isPartOf
+  #hasIncomingLane: hasIncomingLane
+  #hasOutgoingLane : hasOutgoingLane
+  participatesIn : participatesIn 
+  hasUIDinVCD: hasUIDinVCD
+
+
+#PUEDE NO ESTAR
+attributes_to_include:
+  text: ["attr", "visibility"]
+  num: ["velocity", "distance_to_ego", "TTC" , "longitudinalPos" , "lateralPos"]
+  cuboid: ["bbox3D"]
+  point3d: ["pos"]
+  vec: ["velocity_vector", "acceleration_vector", "rotation_rate"]
+  boolean: ["front_of_ego", "rear_of_ego", "left_of_ego", "right_of_ego", "ego_following"]
+
+#PUEDE NO ESTAR
+special_attributes:
+  ego_following: ego_following
+
+#PUEDE NO ESTAR
+data_to_omit:
+  CAN: ["steer_angle", "available_distance", "battery_level", "brake_switch", "gear_position", "left_signal", "rear_left_rpm", "rear_right_rpm", "right_signal", "steering", "steering_speed", "utime", "vehicle_speed", "FL_wheel_speed", "FR_wheel_speed", "RL_wheel_speed", "RR_wheel_speed", "left_solar", "longitudinal_accel", "meanEffTorque", "odom", "odom_speed", "pedal_cc", "regen", "requestedTorqueAfterProc", "right_solar", "steer_corrected", "steer_offset_can", "steer_raw", "transversal_accel"]
+  IMU: ["linear_accel", "q", "rotation_rate", "utime"]
+  ZOE: ["brake_sensor", "steering_sensor", "throttle_sensor", "utime"]
+  static_relations: ["hasIncomingLane", "hasOutgoingLane"]
+
+#PUEDE NO ESTAR
+thresholds:
+  acceleration: 2.5
+  brake: 3
+  cut_in_distance_to_ego: 30
+  cut_out_distance_to_ego: 50
+  lane_invasion_distance_to_ego: 30
+  near_miss_collision: 1.5
+  following_distance: 50

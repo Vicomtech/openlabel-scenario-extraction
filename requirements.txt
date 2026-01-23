@@ -1,0 +1,11 @@
+# HTTP / Utils
+requests>=2.31.0,<3
+PyYAML>=6.0,<7
+
+# RDF / SPARQL
+rdflib>=6.3.0,<8
+SPARQLWrapper>=2.0.0,<3
+SPARQL-Burger>=1.0.2,<2   
+
+# OpenLABEL / VCD
+vcd>=6.0.0,<7        

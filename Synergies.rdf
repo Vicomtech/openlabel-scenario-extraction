@@ -1,0 +1,2390 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.semanticweb.org/vicomtech/ontologies/nuscenes#"
+     xml:base="http://www.semanticweb.org/vicomtech/ontologies/nuscenes"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:synergies="http://www.semanticweb.org/vicomtech/ontologies/synergies#">
+    <owl:Ontology rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies">
+        <rdfs:comment xml:lang="en">Version 0.5.1: Contains all the classes, relationships and attributes of the objects that participate in each scene, plus imformation about the ego_vehicle (velocities of the dynamic objects, information of CAN bus, distance between every object and the ego vehicle).
+
+Version 0.5.2: We added the classes, relationships and attributes related to the maps
+
+Version 0.5.3: We added the classes, relationships and attributes related to the scenarios we want to infer (look class Event)
+
+Version 0.5.4: We removed the super-property ego_data. Now every property of the class EgoData is listed along with the rest of the properties and they are not grouped under a &quot;dummy&quot; property. Additionally, we changed the names of some EgoData properties, to align them with the names defined by the CAN bus inside the VCD. Finally, the position coordinates of the ego_vehicle is stored as an attribute of the class Position (as for any other dynamic and movable object) and not as attribute of the class EgoData. This was necessary in order to provide a common ground for the association of the class Position with the Lane (Position -&gt; isLocatedIn -&gt; Lane).
+
+Version 0.5.4: To align with the attribute names of the VCD, we changed the names of some attributes.
+
+Version 0.5.5: Full CAN_bus data ingestIon. Old structure of ontology with the framestamp of each object data instance stored as attribute of the class Frame. 
+
+Version 0.5.6: Visibility is not included in the ontology. Frame, Map and File classes were deleted. Framestamp is stored as attribute of the class ObjectData. Unification of relationships (hasPosition, hasAttribute etc. is replaced by hasData). The region property for each actor (front_of_ego, right_of_ego, left_of_ego, rear_of_ego) is added as attribute of the class Position. Also, for understanding which EgoData instance corresponds to each Scene (since we have only one ego_vehicle instance for all scenes): Scene -&gt; hasEgoData -&gt; EgoData
+
+
+Version 0.5.6.1: For every dynamic object we also store the velocity vector (in the past we stored the vector only for the ego_vehicle and velX, velY, velZ were attributes of the class EgoData). These attributes now belong to the class Velocity (to generalise for the rest of the vehicles), thus, it will have as properties: velocity, velX, velY, velZ. So: Dynamic/ego_vehicle -&gt; hasData -&gt; Velocity. Also added the data properties rear_of_ego, front_of_ego, right_of_ego and left_of_ego as attributes of the class Position for expressing the region (around ego_vehicle) in which an actor is located in each frame. 
+
+Version 0.5.7: Attemps to replace all object data classes (Attribute, Postion, Rotation etc.) with a unique class named ObjectData (just like in the case of EgoData). Each object will have an ObjectData instance for each frame it participates.
+
+Version 0.5.8 (iurbieta): 
+    - Ontology IRI redefinition (more generic).
+    - Set subclass relation among main classes and owl:Thing.
+    - Include &quot;Lane invasion&quot; event class.
+
+Version 0.5.9 (aescribano)
+    -Added relationships: hasObjectFrom, hasObjectTo</rdfs:comment>
+        <owl:versionInfo>0.5.8</owl:versionInfo>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#description -->
+
+    <owl:AnnotationProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#description"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#divides -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#divides">
+        <synergies:description>connects a lane divider or road divider to a lane or road segment</synergies:description>
+        <rdfs:label>divides</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#hasAction -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#hasAction">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <synergies:description>links an scene to an action taking place</synergies:description>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#hasData -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#hasData">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#object"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <synergies:description>links an object to FrameData containing its attributes at each frame</synergies:description>
+        <rdfs:label>hasData</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#hasEgoData -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#hasEgoData">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <synergies:description>links an scene with an ego vehicle(s) to FrameData containing its attributes at each frame</synergies:description>
+        <rdfs:label>hasEgoData</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#hasEvent -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#hasEvent">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <synergies:description>connects an scene to an event it is involved in</synergies:description>
+        <rdfs:label>hasEvent</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#hasIncomingLane -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#hasIncomingLane">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <synergies:description>connects a lane to another lane indicating incoming direction</synergies:description>
+        <rdfs:label>hasIncomingLane</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#hasObject -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#hasObject">
+        <owl:inverseOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#participatesIn"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#object"/>
+        <synergies:description>associates an action, event or scene with an object it contains</synergies:description>
+        <rdfs:comment>Is not taken into account in the graphDB since the &quot;participatesIn&quot; relation expresses the inverse of this property (Scene -&gt; hasObject -&gt; Object). For the moment we do not utilise this relation in order not to overload the database with redundant information and triples. We keep it defined in the ontology in case in the future we decide that it is useful.</rdfs:comment>
+        <rdfs:label>hasObject</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#hasObjectFrom -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#hasObjectFrom">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <synergies:description>connects an action, scene, or event to a LaneFrom</synergies:description>
+        <rdfs:label>hasObjectFrom</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#hasObjectTo -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#hasObjectTo">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <synergies:description>connects an action, scene, or event to a LaneTo</synergies:description>
+        <rdfs:label>hasObjectTo</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#hasOutgoingLane -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#hasOutgoingLane">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <synergies:description>connects a lane to another lane indicating outgoing direction</synergies:description>
+        <rdfs:label>hasOutgoingLane</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#hasUIDinVCD -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#hasUIDinVCD">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#object"/>
+        <synergies:description>the obejct&apos;s identifier(UID) in the VCD</synergies:description>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#isInLane -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#isInLane">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#object"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <synergies:description>The lane where each object is located in every frame.</synergies:description>
+        <rdfs:comment>Transitive semantic rule for inferring this relation: 
+
+hasPosition(?c,?p) ^ isLocatedIn(?p,?l) -&gt; isInLane(?c,?l)</rdfs:comment>
+        <rdfs:label>isInLane</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#isLocatedIn -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#isLocatedIn">
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <synergies:description>The lane that corresponds to the position coordinates of an object.</synergies:description>
+        <rdfs:label>isLocatedIn</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#isNextTo -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#isNextTo">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <synergies:description>indicates that two entities are adjacent or close to each other</synergies:description>
+        <rdfs:label>isNextTo</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#isPartOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#isPartOf">
+        <synergies:description>relates a static map element to its container (e.g., lane/shoulder/sidewalk/parking/median/border/none/bidirectional -&gt; section; section -&gt; road). Not used for dynamic positions; use isLocatedIn for per-frame location.</synergies:description>
+        <rdfs:comment>Map containment used for this dataset:
+SECTION -&gt; isPartOf -&gt; ROAD
+BIDIRECTIONAL -&gt; isPartOf -&gt; SECTION
+LANE/SHOULDER/SIDEWALK/PARKING/MEDIAN/BORDER/NONE -&gt; isPartOf -&gt; SECTION</rdfs:comment>
+        <rdfs:label>isPartOf</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#participatesIn -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#participatesIn">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#object"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene"/>
+        <synergies:description>links an object to a scene, event, or action it participates in</synergies:description>
+        <rdfs:comment>Consider to use the inverse property: Scene -&gt; hasObject -&gt; Object</rdfs:comment>
+        <rdfs:label>participatesIn</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#FL_wheel_speed -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#FL_wheel_speed">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Front left wheel speed. The unit is rounds per minute with a resolution of 0.0417rpm.</synergies:description>
+        <rdfs:label>FL_wheel_speed</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#FR_wheel_speed -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#FR_wheel_speed">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Front right wheel speed. The unit is rounds per minute with a resolution of 0.0417rpm.</synergies:description>
+        <rdfs:label>FR_wheel_speed</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#IMU_rotation_rateX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#IMU_rotation_rateX">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Angular velocity in rad/s around the x, y, and z axes, respectively, in the IMU coordinate frame.</synergies:description>
+        <rdfs:label>IMU_rotation_rateX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#IMU_rotation_rateY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#IMU_rotation_rateY">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Angular velocity in rad/s around the x, y, and z axes, respectively, in the IMU coordinate frame.</synergies:description>
+        <rdfs:label>IMU_rotation_rateY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#IMU_rotation_rateZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#IMU_rotation_rateZ">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Angular velocity in rad/s around the x, y, and z axes, respectively, in the IMU coordinate frame.</synergies:description>
+        <rdfs:label>IMU_rotation_rateZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#IMU_utime -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#IMU_utime">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <rdfs:label>IMU_utime</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#RL_wheel_speed -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#RL_wheel_speed">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Rear left wheel speed. The unit is rounds per minute with a resolution of 0.0417rpm.</synergies:description>
+        <rdfs:label>RL_wheel_speed</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#RR_wheel_speed -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#RR_wheel_speed">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>Rear right wheel speed. The unit is rounds per minute with a resolution of 0.0417rpm.</rdfs:comment>
+        <rdfs:label>RR_wheel_speed</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#TTC -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#TTC">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>TTC</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ZOE_utime -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ZOE_utime">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <rdfs:label>ZOE_utime</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vector -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vector">
+        <rdfs:label>acceleration_vector</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vectorX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vectorX">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vector"/>
+        <rdfs:label>acceleration_vectorX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vectorY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vectorY">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vector"/>
+        <rdfs:label>acceleration_vectorY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vectorZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vectorZ">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vector"/>
+        <rdfs:label>acceleration_vectorZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#attribute -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#attribute">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>attribute</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#available_distance -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#available_distance">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>Available vehicle range given the current battery level in kilometers.</synergies:description>
+        <rdfs:label>available_distance</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#battery_level -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#battery_level">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>Current battery level in range [0, 100].</synergies:description>
+        <rdfs:label>battery_level</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3D -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3D">
+        <synergies:description>3D bounding box representing object dimensions and position</synergies:description>
+        <rdfs:label>bbox3D</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3DX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3DX">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3D"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>X dimension of the 3D bounding box</synergies:description>
+        <rdfs:label>bbox3DX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3DY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3DY">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3D"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Y dimension of the 3D bounding box</synergies:description>
+        <rdfs:label>bbox3DY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3DZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3DZ">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3D"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Z dimension of the 3D bounding box</synergies:description>
+        <rdfs:label>bbox3DZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3Drotation -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3Drotation">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3D"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>rotation information of the 3D bounding box</synergies:description>
+        <rdfs:label>bbox3Drotation</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#brake -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#brake">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>Braking pressure in bar. An integer in range [0, 126].</synergies:description>
+        <rdfs:label>brake</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#brake_sensor -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#brake_sensor">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Vehicle brake sensor in range [0.166, 0.631]. High values indicate braking.</synergies:description>
+        <rdfs:label>brake_sensor</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#brake_switch -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#brake_switch">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>Brake switch as an integer, 1 (pedal not pressed), 2 (pedal pressed) or 3 (pedal confirmed pressed).</synergies:description>
+        <rdfs:label>brake_switch</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#closest_pose_on_laneX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#closest_pose_on_laneX">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>closest_pose_on_laneX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#closest_pose_on_laneY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#closest_pose_on_laneY">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>closest_pose_on_laneY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#closest_pose_on_laneZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#closest_pose_on_laneZ">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>closest_pose_on_laneZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#curvature -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#curvature">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>curvature</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#date -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#date">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>date</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#distance_along_lane -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#distance_along_lane">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>distance traveled along a lane</synergies:description>
+        <rdfs:label>distance_along_lane</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#distance_to_ego -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#distance_to_ego">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>distance from an object to the ego vehicle</synergies:description>
+        <rdfs:label>distance_to_ego</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ego_rotation_rateX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ego_rotation_rateX">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>The angular velocity vector of the vehicle in rad/s. This is expressed in the ego vehicle frame.</synergies:description>
+        <rdfs:label>ego_rotation_rateX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ego_rotation_rateY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ego_rotation_rateY">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>The angular velocity vector of the vehicle in rad/s. This is expressed in the ego vehicle frame.</synergies:description>
+        <rdfs:label>ego_rotation_rateY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ego_rotation_rateZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ego_rotation_rateZ">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>The angular velocity vector of the vehicle in rad/s. This is expressed in the ego vehicle frame.</synergies:description>
+        <rdfs:label>ego_rotation_rateZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ego_utime -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ego_utime">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <rdfs:label>ego_utime</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#end_framestamp -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#end_framestamp">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <rdfs:label>end_framestamp</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#end_poseX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#end_poseX">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>TODO: Investigate how we are going to express the point3D without having to create three different attributes. Could we work with arrays? (See what would be better for SPRAQL)</rdfs:comment>
+        <rdfs:label>end_poseX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#end_poseY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#end_poseY">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>end_poseY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#end_poseZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#end_poseZ">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>end_poseZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#entire_lane_length -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#entire_lane_length">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>entire_lane_length</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#exterior_node_poses -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#exterior_node_poses">
+        <rdfs:label>exterior_node_poses</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#framestamp -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#framestamp">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>framestamp of the scene</synergies:description>
+        <rdfs:label>framestamp</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#front_of_ego -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#front_of_ego">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
+        <rdfs:label>front_of_ego</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#gear_position -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#gear_position">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>The gear position as an integer, typically 0 (parked) or 7 (driving).</synergies:description>
+        <rdfs:label>gear_position</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#height -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#height">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>height</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#interior_node_poses -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#interior_node_poses">
+        <rdfs:label>interior_node_poses</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#is_intersection -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#is_intersection">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
+        <rdfs:label>is_intersection</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#lane_divider_poses -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#lane_divider_poses">
+        <rdfs:label>lane_divider_poses</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#lane_divider_type -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#lane_divider_type">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>lane_divider_type</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#lane_type -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#lane_type">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>lane_type</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#left_of_ego -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#left_of_ego">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
+        <rdfs:label>left_of_ego</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#left_signal -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#left_signal">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
+        <synergies:description>Left turning signal as an integer, 0 (inactive) or 1 (active).</synergies:description>
+        <rdfs:label>left_signal</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#left_solar -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#left_solar">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>Zoe vehicle left solar sensor value as an integer.</synergies:description>
+        <rdfs:label>left_solar</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#linear_accelX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#linear_accelX">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Acceleration vector (x) in the IMU frame in m/s/s.</synergies:description>
+        <rdfs:label>linear_accelX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#linear_accelY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#linear_accelY">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Acceleration vector (y) in the IMU frame in m/s/s.</synergies:description>
+        <rdfs:label>linear_accelY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#linear_accelZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#linear_accelZ">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Acceleration vector (z) in the IMU frame in m/s/s.</synergies:description>
+        <rdfs:label>linear_accelZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#longitudinal_accel -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#longitudinal_accel">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Longitudinal acceleration in meters per second squared at a resolution of 0.05.</synergies:description>
+        <rdfs:label>longitudinal_accel</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#meanEffTorque -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#meanEffTorque">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>Actual torque delivered by the engine in Newton meters at a resolution of 0.5. Values in range [-400, 1647], offset by -400.</synergies:description>
+        <rdfs:label>meanEffTorque</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#object_token -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#object_token">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#object"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>object_token</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#odom -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#odom">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>Odometry distance travelled modulo vehicle circumference. Values are in centimeters in range [0, 124]. Note that due to the low sampling frequency these values are only useful at low speeds.</synergies:description>
+        <rdfs:label>odom</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#odom_speed -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#odom_speed">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <rdfs:comment>Vehicle speed in km/h. Values in range [0, 60]. For a higher sampling rate refer to the pose.vel message.</rdfs:comment>
+        <rdfs:label>odom_speed</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#orientation -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#orientation">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>orientation</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#pedal_cc -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#pedal_cc">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>Throttle value. Values in range [0, 1000].</synergies:description>
+        <rdfs:label>pedal_cc</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#polygon_node_poses -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#polygon_node_poses">
+        <rdfs:label>polygon_node_poses</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#pos -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#pos">
+        <rdfs:label>pos</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#posX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#posX">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#pos"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>posX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#posY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#posY">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#pos"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>posY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#posZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#posZ">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#pos"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>posZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#positionX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#positionX">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>positionX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#positionY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#positionY">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>positionY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#positionZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#positionZ">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>positionZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#qX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#qX">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>Quaternion that transforms from IMU coordinates to a fixed reference frame. The yaw of this reference frame is arbitrary, determined by the IMU. However, the x-y plane of the reference frame is perpendicular to gravity, and z points up.</rdfs:comment>
+        <rdfs:label>qX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#qY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#qY">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Quaternion that transforms from IMU coordinates to a fixed reference frame. The yaw of this reference frame is arbitrary, determined by the IMU. However, the x-y plane of the reference frame is perpendicular to gravity, and z points up.</synergies:description>
+        <rdfs:label>qY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#qZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#qZ">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Quaternion that transforms from IMU coordinates to a fixed reference frame. The yaw of this reference frame is arbitrary, determined by the IMU. However, the x-y plane of the reference frame is perpendicular to gravity, and z points up.</synergies:description>
+        <rdfs:label>qZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#radius -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#radius">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>radius</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#rear_left_rpm -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#rear_left_rpm">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>Rear left brake speed in revolutions per minute.</rdfs:comment>
+        <rdfs:label>rear_left_rpm</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#rear_of_ego -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#rear_of_ego">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
+        <rdfs:label>rear_of_ego</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#rear_right_rpm -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#rear_right_rpm">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Rear right brake speed in revolutions per minute.</synergies:description>
+        <rdfs:label>rear_right_rpm</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#regen -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#regen">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>Coasting throttle. Values in range [0, 100].</synergies:description>
+        <rdfs:label>regen</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#requestedTorqueAfterProc -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#requestedTorqueAfterProc">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Input torque requested in Newton meters at a resolution of 0.5. Values in range [-400, 1647], offset by -400.</synergies:description>
+        <rdfs:label>requestedTorqueAfterProc</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#right_of_ego -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#right_of_ego">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
+        <rdfs:label>right_of_ego</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#right_signal -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#right_signal">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
+        <synergies:description>Right turning signal as an integer, 0 (inactive) or 1 (active).</synergies:description>
+        <rdfs:label>right_signal</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#right_solar -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#right_solar">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>Zoe vehicle right solar sensor value as an integer.</synergies:description>
+        <rdfs:label>right_solar</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#road_divider_poses -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#road_divider_poses">
+        <rdfs:label>road_divider_poses</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#rotation -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#rotation">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+                    <rdf:Description rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <rdfs:label>rotation</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#rotation_rate -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#rotation_rate">
+        <rdfs:label>rotation_rate</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#rotation_rateX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#rotation_rateX">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#rotation_rate"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>rotation_rateX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#rotation_rateY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#rotation_rateY">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#rotation_rate"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>rotation_rateY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#rotation_rateZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#rotation_rateZ">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#rotation_rate"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>rotation_rateZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#scene_description -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene_description">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <synergies:description>description of the scene</synergies:description>
+        <rdfs:label>scene_description</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#scene_name -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene_name">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <synergies:description>name of the scene</synergies:description>
+        <rdfs:label>scene_name</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#segment_lengthX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#segment_lengthX">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>TODO: Investigate how we are going to express the point3D without having to create three different attributes. Could we work with arrays? (See what would be better for SPRAQL)</rdfs:comment>
+        <rdfs:label>segment_lengthX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#segment_lengthY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#segment_lengthY">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>segment_lengthY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#segment_lengthZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#segment_lengthZ">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>segment_lengthZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#shape -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#shape">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range>
+            <rdfs:Datatype>
+                <owl:oneOf>
+                    <rdf:Description>
+                        <rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#List"/>
+                        <rdf:first>LSL</rdf:first>
+                        <rdf:rest>
+                            <rdf:Description>
+                                <rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#List"/>
+                                <rdf:first>LSR</rdf:first>
+                                <rdf:rest>
+                                    <rdf:Description>
+                                        <rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#List"/>
+                                        <rdf:first>RSL</rdf:first>
+                                        <rdf:rest>
+                                            <rdf:Description>
+                                                <rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#List"/>
+                                                <rdf:first>RSR</rdf:first>
+                                                <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
+                                            </rdf:Description>
+                                        </rdf:rest>
+                                    </rdf:Description>
+                                </rdf:rest>
+                            </rdf:Description>
+                        </rdf:rest>
+                    </rdf:Description>
+                </owl:oneOf>
+            </rdfs:Datatype>
+        </rdfs:range>
+        <rdfs:label>shape</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#start_framestamp -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#start_framestamp">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <rdfs:label>start_framestamp</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#start_poseX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#start_poseX">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:comment>TODO: Investigate how we are going to express the point3D without having to create three different attributes. Could we work with arrays? (See what would be better for SPRAQL)</rdfs:comment>
+        <rdfs:label>start_poseX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#start_poseY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#start_poseY">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>start_poseY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#start_poseZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#start_poseZ">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>start_poseZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#steer_angle -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#steer_angle">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Steering angle feedback in radians in range [-7.7, 6.3]. 0 indicates no steering, positive values indicate left turns, negative values right turns.</synergies:description>
+        <rdfs:label>steer_angle</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#steer_corrected -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#steer_corrected">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Steering angle (steer_raw) corrected by an offset (steer_offset_can).</synergies:description>
+        <rdfs:label>steer_corrected</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#steer_offset_can -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#steer_offset_can">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Steering angle offset in degrees, typically -12.6.</synergies:description>
+        <rdfs:label>steer_offset_can</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#steer_raw -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#steer_raw">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Raw steering angle in degrees.</synergies:description>
+        <rdfs:label>steer_raw</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#steering -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#steering">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Steering angle in degrees at a resolution of 0.1 in range [-780, 779.9].</synergies:description>
+        <rdfs:label>steering</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#steering_sensor -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#steering_sensor">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Vehicle steering sensor in range [0.176, 0.252]</synergies:description>
+        <rdfs:label>steering_sensor</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#steering_speed -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#steering_speed">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Steering speed in degrees per second in range [-465, 393].</synergies:description>
+        <rdfs:label>steering_speed</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#stop_line_type -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#stop_line_type">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>stop_line_type</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#throttle -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#throttle">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>Throttle pedal position as an integer in range [0, 1000].</synergies:description>
+        <rdfs:label>throttle</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#throttle_sensor -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#throttle_sensor">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Vehicle throttle sensor in range [0.105, 0.411].</synergies:description>
+        <rdfs:label>throttle_sensor</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#timestamp -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#timestamp">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <rdfs:label>timestamp</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#traffic_light_type -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#traffic_light_type">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>traffic_light_type</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#transversal_accel -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#transversal_accel">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Transversal acceleration in g at a resolution of 0.004.</synergies:description>
+        <rdfs:label>transversal_accel</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#vehicle_speed -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#vehicle_speed">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Vehicle speed in km/h at a resolution of 0.01.</synergies:description>
+        <rdfs:label>vehicle_speed</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#velX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#velX">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+                    <rdf:Description rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>The velocity in m/s, expressed in the ego vehicle frame.</synergies:description>
+        <rdfs:label>velX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#velY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#velY">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+                    <rdf:Description rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>The velocity in m/s, expressed in the ego vehicle frame.</synergies:description>
+        <rdfs:label>velY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#velZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#velZ">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+                    <rdf:Description rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>The velocity in m/s, expressed in the ego vehicle frame.</synergies:description>
+        <rdfs:label>velZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+                    <rdf:Description rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <rdfs:label>velocity</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vector -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vector">
+        <rdfs:label>velocity_vector</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vectorX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vectorX">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vector"/>
+        <rdfs:label>velocity_vectorX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vectorY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vectorY">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vector"/>
+        <rdfs:label>velocity_vectorY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vectorZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vectorZ">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vector"/>
+        <rdfs:label>velocity_vectorZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#visibility -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#visibility">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>visibility</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#yaw_rate -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#yaw_rate">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Yaw turning rate in degrees per second at a resolution of 0.1.</synergies:description>
+        <rdfs:label>yaw_rate</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#AMBULANCE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#AMBULANCE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>AMBULANCE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ANIMAL -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ANIMAL">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectType"/>
+        <rdfs:label>ANIMAL</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#AceleratingHard -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#AceleratingHard">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <synergies:description>When a vehicle rapidly increases its speed</synergies:description>
+        <rdfs:label>AceleratingHard</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#Action -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <synergies:description>An action that lasts across multiple frames</synergies:description>
+        <rdfs:label>Action</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#BICYCLE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#BICYCLE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>BICYCLE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#BIDIRECTIONAL -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#BIDIRECTIONAL">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>BIDIRECTIONAL</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#BIKING -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#BIKING">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>BIKING</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#BORDER -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#BORDER">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>BORDER</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#BUS -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#BUS">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>BUS</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#BrakingHard -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#BrakingHard">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <synergies:description>When a vehicle applies heavy braking</synergies:description>
+        <rdfs:label>BrakingHard</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#CAR -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#CAR">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>CAR</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#CIVIL -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#CIVIL">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>CIVIL</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#COMPACT_CAR -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#COMPACT_CAR">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>COMPACT_CAR</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#CONNECTINGRAMP -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#CONNECTINGRAMP">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>CONNECTINGRAMP</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#CURB -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#CURB">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>CURB</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ChangingLane -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ChangingLane">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <synergies:description>When a vehicle moves from one lane to another</synergies:description>
+        <rdfs:label>ChangingLane</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#CuttingIn -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#CuttingIn">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <synergies:description>When a vehicle suddenly enters another vehicle’s lane</synergies:description>
+        <rdfs:label>CuttingIn</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#CuttingOut -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#CuttingOut">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <synergies:description>When a vehicle abruptly moves out of a lane into the path of another vehicle</synergies:description>
+        <rdfs:label>CuttingOut</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#DELIVERY_VAN -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#DELIVERY_VAN">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>DELIVERY_VAN</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#DRIVING -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#DRIVING">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>DRIVING</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ENTRY -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ENTRY">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>ENTRY</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#EXIT -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#EXIT">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>EXIT</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#EgoData">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <synergies:description>contains the data specific to the ego vehicle(s) in the scenes</synergies:description>
+        <rdfs:label>EgoData</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#Event -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <synergies:description>An event that lasts exactly one frame</synergies:description>
+        <rdfs:label>Event</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#FIRE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#FIRE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>FIRE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#Following -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#Following">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <synergies:description>When a vehicle drives closely behind another vehicle</synergies:description>
+        <rdfs:label>Following</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#Follows -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#Follows">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <synergies:description>When a vehicle drives closely behind another vehicle</synergies:description>
+        <rdfs:label>Follows</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <synergies:description>contains the data for all the frames in the scenes</synergies:description>
+        <rdfs:label>FrameData</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#GARBAGE_COLLECTION -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#GARBAGE_COLLECTION">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>GARBAGE_COLLECTION</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#HEAVY_TRUCK -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#HEAVY_TRUCK">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>HEAVY_TRUCK</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#HardAcceleration -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#HardAcceleration">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <synergies:description>When a vehicle rapidly increases its speed</synergies:description>
+        <rdfs:label>HardAcceleration</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#HardBrake -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#HardBrake">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <synergies:description>When a vehicle applies heavy braking</synergies:description>
+        <rdfs:label>HardBrake</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <owl:disjointWith rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#dynamic"/>
+        <synergies:description>a specific strip of road designated for vehicle travel in a particular direction</synergies:description>
+        <rdfs:label>LANE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#LUXURY_CAR -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#LUXURY_CAR">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>LUXURY_CAR</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#MEDIAN -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#MEDIAN">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>MEDIAN</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#MILITARY -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#MILITARY">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>MILITARY</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#MOTORBIKE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#MOTORBIKE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>MOTORBIKE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectType -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectType">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#dynamic"/>
+        <rdfs:label>MovingObjectType</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#VEHICLE"/>
+        <rdfs:label>MovingObjectVehicleClassificationRole</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#VEHICLE"/>
+        <rdfs:label>MovingObjectVehicleClassificationType</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#NONE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#NONE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>NONE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#NearMissCollision -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#NearMissCollision">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <synergies:description>When two vehicles or a vehicle and an obstacle come very close to colliding but avoid impact</synergies:description>
+        <rdfs:label>NearMissCollision</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#NearlyColliding -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#NearlyColliding">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <synergies:description>When two vehicles or a vehicle and an obstacle come very close to colliding but avoid impact</synergies:description>
+        <rdfs:label>NearlyColliding</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#OFFRAMP -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#OFFRAMP">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>OFFRAMP</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ONRAMP -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ONRAMP">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>ONRAMP</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#OTHER -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#OTHER">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectType"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>OTHER</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <synergies:description>contains the data related to the objects detected in the scenes</synergies:description>
+        <rdfs:label>ObjectData</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#PARKING -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#PARKING">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>PARKING</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#PEDESTRIAN -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#PEDESTRIAN">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectType"/>
+        <rdfs:label>PEDESTRIAN</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#POLICE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#POLICE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>POLICE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#PUBLIC_TRANSPORT -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#PUBLIC_TRANSPORT">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>PUBLIC_TRANSPORT</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#PedestrianCrossesRoad -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#PedestrianCrossesRoad">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <synergies:description>A pedestrian walking across a road</synergies:description>
+        <rdfs:label>PedestrianCrossesRoad</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#PedestrianCrossesZebra -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#PedestrianCrossesZebra">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <synergies:description>A pedestrian crossing a zebra crossing</synergies:description>
+        <rdfs:label>PedestrianCrossesZebra</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#PedestrianCrossingLane -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#PedestrianCrossingLane">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <synergies:description>When a pedestrian is crossing a lane</synergies:description>
+        <rdfs:label>PedestrianCrossingLane</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#PedestrianCrossingRoad -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#PedestrianCrossingRoad">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <synergies:description>A pedestrian walking across a road</synergies:description>
+        <rdfs:label>PedestrianCrossingRoad</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#PedestrianCrossingZebra -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#PedestrianCrossingZebra">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+        <synergies:description>A pedestrian crossing a zebra crossing</synergies:description>
+        <rdfs:label>PedestrianCrossingZebra</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#PedestrianOnLane -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#PedestrianOnLane">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
+        <synergies:description>When a pedestrian is on a lane</synergies:description>
+        <rdfs:label>PedestrianOnLane</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#RESTRICTED -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#RESTRICTED">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>RESTRICTED</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ROAD -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ROAD">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>ROAD</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ROAD_ASSISTANCE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ROAD_ASSISTANCE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>ROAD_ASSISTANCE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ROAD_CONSTRUCTION -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ROAD_CONSTRUCTION">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>ROAD_CONSTRUCTION</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#SECTION -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#SECTION">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>SECTION</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#SEMITRACTOR -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#SEMITRACTOR">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>SEMITRACTOR</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#SEMITRAILER -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#SEMITRAILER">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>SEMITRAILER</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#SHOULDER -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#SHOULDER">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>SHOULDER</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#SIDEWALK -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#SIDEWALK">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>SIDEWALK</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#SLIPLANE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#SLIPLANE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>SLIPLANE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#SMALL_CAR -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#SMALL_CAR">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>SMALL_CAR</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#STANDUP_SCOOTER -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#STANDUP_SCOOTER">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>STANDUP_SCOOTER</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#STOP -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#STOP">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>STOP</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#TRAILER -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#TRAILER">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>TRAILER</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#TRAIN -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#TRAIN">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>TRAIN</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#TRAM -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#TRAM">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>TRAM</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#UNKNOWN -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#UNKNOWN">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectType"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>UNKNOWN</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#VEHICLE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#VEHICLE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectType"/>
+        <rdfs:label>VEHICLE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#WALKING -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#WALKING">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>WALKING</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#WHEELCHAIR -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#WHEELCHAIR">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>WHEELCHAIR</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#dynamic -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#dynamic">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#object"/>
+        <owl:disjointWith rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <synergies:description>objects that move or change position over time</synergies:description>
+        <rdfs:label>dynamic</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#object -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#object">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <synergies:description>a  category for any detected item in the scene</synergies:description>
+        <rdfs:label>object</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#scene -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <synergies:description>is a sequence of frames that includes frames, objects, relationships, metadata, and other relevant information, representing a specific period or situation captured</synergies:description>
+        <rdfs:label>scene</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#static -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#static">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#object"/>
+        <synergies:description>objects that do not move</synergies:description>
+        <rdfs:label>static</rdfs:label>
+    </owl:Class>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi -->
+

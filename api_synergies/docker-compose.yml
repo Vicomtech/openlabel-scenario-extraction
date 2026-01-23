@@ -1,0 +1,9 @@
+services:
+  api:
+    build: .
+    image: api-synergies:latest
+    container_name: api-synergies
+    ports:
+      - "8085:8000"
+    env_file:
+      - .env

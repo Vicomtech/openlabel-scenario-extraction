@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  graphdb:
+    image: khaller/graphdb-free:10.8.0
+    container_name: graphdb-aescribano
+    ports:
+      - "7600:7200"
+    restart: always
+    volumes:
+      - type: bind
+        source: ./vol
+        target: /opt/graphdb/home
+        bind:
+          create_host_path: true
+    environment:
+      GDB_JAVA_OPTS: >-
+        -Xmx64g -Xms64g -Xss8m
+        -Dgraphdb.home=/opt/graphdb/home
+        -Dgraphdb.workbench.importDirectory=/opt/graphdb/home/graphdb-import
+        -Dgraphdb.workbench.maxUploadSize=8589934592
+    logging:
+      options:
+        max-size: "50m"
+
+  api:
+    build:
+      context: ./api_synergies
+    image: api-synergies:latest
+    container_name: api-synergies
+    depends_on:
+      - graphdb
+    ports:
+      - "8085:8000"
+    env_file:
+      - ./api_synergies/.env
+    restart: always
