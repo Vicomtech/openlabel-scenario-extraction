@@ -45,7 +45,7 @@ When the console tells you to import `Synergies.nq`:
 3) Select `Synergies.nq` and click **Import**.
 4) Wait for the import to finish.
 
-<img src="./README_imagenes/preload.png" alt="Preload import" width="900">
+![Preload import](./assets/images/preload.png)
 
 ### Import `queries_Synergies.nt`
 When the console tells you to import queries:
@@ -54,7 +54,7 @@ When the console tells you to import queries:
 3) Do **not** select `Synergies.nq` at this step.
 4) Click **Import** and wait for it to finish.
 
-<img src="./README_imagenes/queries.png" alt="Queries import" width="900">
+![Queries import](./assets/images/queries.png)
 
 ## Export actions/events back to VCDs
 At the end, the pipeline asks:
