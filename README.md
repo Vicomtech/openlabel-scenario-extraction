@@ -1,4 +1,4 @@
-# omegaprime-scenario-extraction
+# Omegaprime-scenario-extraction - PIPELINE
 
 This project runs a pipeline that:
 1) starts GraphDB (via Docker),
@@ -45,7 +45,7 @@ When the console tells you to import `Synergies.nq`:
 3) Select `Synergies.nq` and click **Import**.
 4) Wait for the import to finish.
 
-![Preload import](README_imagenes/preload.png)
+<img src="./README_imagenes/preload.png" alt="Preload import" width="900">
 
 ### Import `queries_Synergies.nt`
 When the console tells you to import queries:
@@ -54,7 +54,7 @@ When the console tells you to import queries:
 3) Do **not** select `Synergies.nq` at this step.
 4) Click **Import** and wait for it to finish.
 
-![Queries import](README_imagenes/queries.png)
+<img src="./README_imagenes/queries.png" alt="Queries import" width="900">
 
 ## Export actions/events back to VCDs
 At the end, the pipeline asks:
@@ -66,10 +66,24 @@ Do you want to export actions/events back to VCDs? [y/N]
 If you answer **yes**, it will create the output files in the folder from:
 `conf.yaml -> paths.output_dir` (default: `./vcds_pruebas_con_acciones_y_eventos/`).
 
-If you answer **no** but later decide to export, run:
-
-```powershell
-python .\graphdb_to_vcd_parser.py
-```
-
 This will read the RDF in GraphDB and write the enriched VCDs into `paths.output_dir`.
+
+## Re-run only part of the pipeline (examples)
+You can skip steps if you only want to repeat a part:
+
+- Re-run only `preload.py` (skip ontology + queries):
+  ```powershell
+  python .\run_pipeline.py --skip-ontology --skip-queries
+  ```
+- Re-run only `queries.py` (skip ontology + preload):
+  ```powershell
+  python .\run_pipeline.py --skip-ontology --skip-preload
+  ```
+- Run without starting Docker (GraphDB already running):
+  ```powershell
+  python .\run_pipeline.py --no-docker
+  ```
+- Only export VCDs (no pipeline, just write actions/events):
+  ```powershell
+  python .\graphdb_to_vcd_parser.py
+  ```
