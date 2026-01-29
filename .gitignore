@@ -1,6 +1,5 @@
-FromGraphdb_toVCD/
 vcds_pruebas/
 Final.csv
-graphdb_to_vcd_parser.py
-queries.py
-run_pipeline.py
+vcds_prueba_parser/
+vol/
+vcds_pruebas_con_acciones_y_eventos/
