@@ -81,7 +81,7 @@ data_to_omit:
 thresholds:
   acceleration: 2.5
   brake: 3
-  cut_in_distance_to_ego: 30
+  cut_in_distance_to_ego: 50
   cut_out_distance_to_ego: 50
   lane_invasion_distance_to_ego: 30
   near_miss_collision: 1.5

@@ -667,11 +667,11 @@ WHERE {{
   FILTER(?de > 0)
   FILTER(?de < {THRESHOLD_CUT_IN})
 
+  # rotación: diferencia angular normalizada usando cos (evita salto ±pi)
   BIND(ofn:pi() AS ?pi)
-  FILTER(
-    ?rv > (?rh - (?pi/4)) &&
-    ?rv < (?rh + (?pi/4))
-  )
+  BIND((?rv - ?rh) AS ?drot)
+  BIND(ofn:cos(?drot) AS ?cosd)
+  FILTER(?cosd > ofn:cos(?pi/4))
   {filter_str}
 }}
 ORDER BY ?scene ?v ?h ?f2
@@ -745,11 +745,11 @@ WHERE {{
   FILTER(?de > 0)
   FILTER(?de < {THRESHOLD_CUT_OUT})
 
+  # rotación: diferencia angular normalizada usando cos (evita salto ±pi)
   BIND(ofn:pi() AS ?pi)
-  FILTER(
-    ?rv > (?rh - (?pi/4)) &&
-    ?rv < (?rh + (?pi/4))
-  )
+  BIND((?rv - ?rh) AS ?drot)
+  BIND(ofn:cos(?drot) AS ?cosd)
+  FILTER(?cosd > ofn:cos(?pi/4))
   {filter_str}
 }}
 ORDER BY ?scene ?v ?h ?f2
