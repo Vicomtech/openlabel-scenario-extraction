@@ -206,6 +206,15 @@ def move_and_pause(src_path: Path, import_dir: Path, workbench_url: str) -> None
     print("Resuming pipeline...\n")
 
 
+def find_latest_file(root: Path, patterns: list[str]) -> Optional[Path]:
+    candidates: list[Path] = []
+    for pattern in patterns:
+        candidates.extend(root.glob(pattern))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda p: p.stat().st_mtime)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the Synergies pipeline end-to-end")
     parser.add_argument("--config", default="conf.yaml", help="Path to conf.yaml")
@@ -218,6 +227,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--wait-seconds", type=int, default=DEFAULT_WAIT_SECONDS)
     parser.add_argument("--http-timeout", type=int, default=DEFAULT_HTTP_TIMEOUT)
     return parser.parse_args()
+
+
+def prompt_preload_mode() -> str:
+    print("\nChoose preload.py execution mode:")
+    print("1) Multiprocessing (faster, WARNING: may fail if you don't have much RAM)")
+    print("2) Sequential (slower but more stable)")
+    choice = input("Option [1/2] (default 1): ").strip()
+    return "seq" if choice == "2" else "mp"
 
 
 def main() -> int:
@@ -284,9 +301,23 @@ def main() -> int:
     # 4. PRELOAD (Generate -> Move -> Manual Pause)
     if not args.skip_preload:
         print("\n--- Running preload.py ---")
-        run_cmd([sys.executable, "preload.py"], cwd=root)
+        mode = prompt_preload_mode()
+        run_cmd([sys.executable, "preload.py", "--mode", mode], cwd=root)
 
-        nq_path = root / "Synergies.nq"
+        nq_name = cfg.get("outputs", {}).get("nq_file", "Synergies.nq")
+        nq_path = resolve_path(root, nq_name)
+        if not nq_path.exists():
+            nq_path = find_latest_file(
+                root,
+                [
+                    "Synergies.nq",
+                    "Synergies_partners.nq",
+                    "*.nq",
+                ],
+            )
+        if not nq_path:
+            print("No .nq output file found after preload.py")
+            return 1
         move_and_pause(nq_path, graphdb_import_dir, base_url)
         
         print("[OK] Preload step verified by user.")
@@ -296,7 +327,20 @@ def main() -> int:
         print("\n--- Running queries.py ---")
         run_cmd([sys.executable, "queries.py"], cwd=root)
 
-        nt_path = root / "queries_Synergies.nt"
+        nt_name = cfg.get("outputs", {}).get("queries_file", "queries_Synergies.nt")
+        nt_path = resolve_path(root, nt_name)
+        if not nt_path.exists():
+            nt_path = find_latest_file(
+                root,
+                [
+                    "queries_Synergies.nt",
+                    "queries_SynergiesPartners.nt",
+                    "queries_*.nt",
+                ],
+            )
+        if not nt_path:
+            print("No .nt output file found after queries.py")
+            return 1
         move_and_pause(nt_path, graphdb_import_dir, base_url)
 
         print("[OK] Queries step verified by user.")

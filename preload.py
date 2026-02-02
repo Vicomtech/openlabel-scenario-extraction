@@ -4,6 +4,7 @@ to N-Quads. Uses multiprocessing to create per-scene .nq chunks and merges them
 into a single output file.
 """
 
+import argparse
 import os
 import vcd.core as core
 import vcd.types as types
@@ -56,7 +57,7 @@ ds.bind(pref, ns)
 ds.bind("rdf", Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
 
 # Metrics
-row_list = [["Scene", "Filename", "Filesize", "Time", "Nodes", "Relations", "Attributes", "Calls"]]
+METRICS_HEADER = ["Scene", "Filename", "Filesize", "Time", "Nodes", "Relations", "Attributes", "Calls"]
 
 
 # ---------------------------------------------------------------------
@@ -147,6 +148,14 @@ def _convert_value(value, uri):
         return Literal(value)
     else:
         return None
+
+
+def write_metrics_csv(rows, path="Final.csv"):
+    """Write metrics rows to CSV (single writer to avoid concurrency issues)."""
+    with open(path, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(METRICS_HEADER)
+        writer.writerows(rows)
     
 # -----------------------------------------------------------------------------
 # Parser helpers
@@ -244,7 +253,6 @@ def get_subproperties_in_order(property_name):
 
 def process_vcd(v):
     """Parse one VCD, build per-scene RDF, and serialize to a temp .nq."""
-    start_file = time.time()
     start_file = time.time()
     scene_data = {}
     scene_relations = {}
@@ -641,10 +649,6 @@ def process_vcd(v):
     f_size = os.path.getsize(os.path.join(path_to_vcd, v))
     size = convert_bytes(f_size)
     metrics = [scene_name, v, size, time_int, nodes, rel, attr, calls]
-    row_list.append(metrics)
-    with open('Final.csv', 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerows(row_list)
 
     tmp_file = os.path.join(tempfile.mkdtemp(), f"{uuid.uuid4().hex}.nq")
     ds_local = Dataset()
@@ -654,7 +658,7 @@ def process_vcd(v):
     add_scene_to_named_graph(scene_data, scene_relations, ds_local, my_uri, pref, scene_graph)
     ds_local.serialize(destination=tmp_file, format='nquads')
     
-    return tmp_file
+    return tmp_file, metrics
 
 def merge_results(queue):
     """Function to merge scene fragments from a multiprocessing queue into the global dataset."""
@@ -663,24 +667,69 @@ def merge_results(queue):
         scene_data, scene_relations = queue.get()
         add_scene_to_named_graph(scene_data, scene_relations, ds, my_uri, pref, graph_context)
 
-if __name__ == '__main__':
-    # Parallel workflow: process each VCD into a temporary .nq chunk, then merge them
-    with multiprocessing.Pool() as pool:
-        chunk_files = pool.map(process_vcd, vcd_files) 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Preload VCDs and generate N-Quads output")
+    parser.add_argument(
+        "--mode",
+        choices=("mp", "seq"),
+        default="mp",
+        help="Processing mode: mp (multiprocessing) or seq (sequential).",
+    )
+    parser.add_argument(
+        "--processes",
+        type=int,
+        default=None,
+        help="Number of worker processes for mp mode (default: os.cpu_count()).",
+    )
+    return parser.parse_args()
 
-    output_file = "Synergies.nq"
+
+def append_chunk(dst_handle, chunk_path):
+    with open(chunk_path, 'rb') as src:
+        shutil.copyfileobj(src, dst_handle)
+
+
+def run_multiprocessing(output_file, processes):
+    with multiprocessing.Pool(processes=processes) as pool:
+        results = pool.map(process_vcd, vcd_files)
+
+    metrics_rows = []
     with open(output_file, 'wb') as dst:
-        for chunk in chunk_files:
-            with open(chunk, 'rb') as src:
-                shutil.copyfileobj(src, dst)
+        for chunk_path, metrics in results:
+            append_chunk(dst, chunk_path)
+            os.remove(chunk_path)
+            metrics_rows.append(metrics)
+
+    return metrics_rows
+
+
+def run_sequential(output_file):
+    metrics_rows = []
+    with open(output_file, 'wb') as dst:
+        for vcd in vcd_files:
+            chunk_path, metrics = process_vcd(vcd)
+            append_chunk(dst, chunk_path)
+            os.remove(chunk_path)
+            metrics_rows.append(metrics)
+    return metrics_rows
+
+
+if __name__ == '__main__':
+    args = parse_args()
+    output_file = read_params.get("outputs", {}).get("nq_file", "Synergies.nq")
+    output_dir = os.path.dirname(output_file)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+
+    if args.mode == "seq":
+        metrics_rows = run_sequential(output_file)
+    else:
+        metrics_rows = run_multiprocessing(output_file, args.processes)
+
+    write_metrics_csv(metrics_rows)
 
     print(f"Dataset serializado en {output_file}")
     print('It took', time.time() - start_script, 'seconds.')
-
-    # Cleanup temporary files
-    for f in chunk_files:
-        os.remove(f)
-
     print('All temporary files have been removed.')
 
 

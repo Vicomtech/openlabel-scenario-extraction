@@ -1,3 +1,4 @@
+import os
 import sys
 import yaml
 import requests
@@ -447,15 +448,16 @@ def handle_normal_vehicle_lane_change():
     SELECT ?s ?l1 ?l2 ?f1 ?f2 ?vehicle
     WHERE {{
         ?s rdf:type {pref_str}:scene .
-        ?s {pref_str}:hasObject ?vehicle .
+        ?s {pref_str}:hasObject ?vehicle, ?l1, ?l2 .
 
         ?vehicle rdf:type {pref_str}:VEHICLE .
-        
         ?vehicle {pref_str}:hasData ?od1, ?od2 .
-        
+
         ?od1 rdf:type {pref_str}:ObjectData ;
              {pref_str}:framestamp ?f1 ;
              {pref_str}:isLocatedIn ?l1 .
+
+        BIND(?f1 + 1 AS ?f2)
              
         ?od2 rdf:type {pref_str}:ObjectData ;
              {pref_str}:framestamp ?f2 ;
@@ -466,7 +468,6 @@ def handle_normal_vehicle_lane_change():
         
         ?l1 {pref_str}:isNextTo ?l2 .
         
-        FILTER(?f2 - ?f1 = 1)
         FILTER(?l1 != ?l2)
         
         {filter_str}
@@ -646,6 +647,9 @@ WHERE {{
   ?od1 a {pref_str}:ObjectData ;
        {pref_str}:framestamp ?f1 ;
        {pref_str}:isLocatedIn ?l1 .
+  
+  BIND(?f1 + 1 AS ?f2)
+
   ?od2 a {pref_str}:ObjectData ;
        {pref_str}:framestamp ?f2 ;
        {pref_str}:isLocatedIn ?l2 ;
@@ -661,7 +665,6 @@ WHERE {{
        {pref_str}:bbox3Drotation ?rh .
 
   FILTER(?h != ?v)
-  FILTER(?f2 - ?f1 = 1)
 
   BIND((?sv - ?sh) AS ?de)
   FILTER(?de > 0)
@@ -723,6 +726,9 @@ WHERE {{
        {pref_str}:isLocatedIn ?l1 ;
        {pref_str}:longitudinalPos ?sv ;
        {pref_str}:bbox3Drotation ?rv .
+  
+  BIND(?f1 + 1 AS ?f2)
+
   ?od2 a {pref_str}:ObjectData ;
        {pref_str}:framestamp ?f2 ;
        {pref_str}:isLocatedIn ?l2 .
@@ -739,7 +745,6 @@ WHERE {{
         {pref_str}:isLocatedIn ?l1 .
 
   FILTER(?h != ?v)
-  FILTER(?f2 - ?f1 = 1)
 
   BIND((?sv - ?sh) AS ?de)
   FILTER(?de > 0)
@@ -1396,12 +1401,16 @@ def execute():
     #handle_hard_brake_action_and_event_ego()
     
     if len(graph):
+        output_file = read_params.get("outputs", {}).get("queries_file", "queries_Synergies.nt")
+        output_dir = os.path.dirname(output_file)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
         graph.serialize(
-        destination="queries_Synergies.nt",
+        destination=output_file,
         format="nt",
         encoding="utf-8"
         )
-        print("Tripletas serializadas en queries_Synergies.nt")
+        print(f"Tripletas serializadas en {output_file}")
     else:
         print("No se generaron tripletas.")
 

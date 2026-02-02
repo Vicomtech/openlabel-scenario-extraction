@@ -5,10 +5,17 @@ ontology:
   ontology_path : "./Synergies.rdf"
 
 vcd: 
+  #vcd_path: "./vcds_pruebas/"
   vcd_path: "./vcds_pruebas/"
 
 paths:
-  output_dir: "./vcds_pruebas_con_acciones_y_eventos/"
+  #output_dir: "./vcds_pruebas_con_acciones_y_eventos/"
+  output_dir: "./vcds_pruebas_output/"
+
+outputs:
+  nq_file: "Synergies.nq"
+  queries_file: "queries_Synergies.nt"
+
 
 database:
   db_endpoint: "http://localhost:7600/repositories/Synergies/statements"
