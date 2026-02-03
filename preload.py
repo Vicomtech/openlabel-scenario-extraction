@@ -55,6 +55,8 @@ omit_relations = read_params.get("data_to_omit", {}).get("static_relations", [])
 ds = Dataset()
 ds.bind(pref, ns)
 ds.bind("rdf", Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
+# Disable the global in-memory dataset to avoid accumulating triples across files.
+USE_GLOBAL_DATASET = False
 
 # Metrics
 METRICS_HEADER = ["Scene", "Filename", "Filesize", "Time", "Nodes", "Relations", "Attributes", "Calls"]
@@ -138,6 +140,8 @@ def _convert_value(value, uri):
     """Convert Python values to RDF terms (URIRef/Literal) or skip if unsupported."""
     if value is None:
         return None
+    if isinstance(value, bool):
+        return Literal(value, datatype=XSD.boolean)
     if isinstance(value, int):
         return Literal(value, datatype=XSD.integer)
     elif isinstance(value, float):
@@ -639,7 +643,8 @@ def process_vcd(v):
             return d
     scene_relations = clean_empty(scene_relations)
     
-    add_scene_to_named_graph(scene_data, scene_relations, ds, my_uri, pref, scene_graph)
+    if USE_GLOBAL_DATASET:
+        add_scene_to_named_graph(scene_data, scene_relations, ds, my_uri, pref, scene_graph)
     
     time_int = time.time() - start_file
     calls = 0  
@@ -662,6 +667,8 @@ def process_vcd(v):
 
 def merge_results(queue):
     """Function to merge scene fragments from a multiprocessing queue into the global dataset."""
+    if not USE_GLOBAL_DATASET:
+        return
     global ds
     while not queue.empty():
         scene_data, scene_relations = queue.get()
