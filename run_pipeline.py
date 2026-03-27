@@ -222,6 +222,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--skip-ontology", action="store_true", help="Skip ontology import")
     parser.add_argument("--skip-preload", action="store_true", help="Skip preload.py")
     parser.add_argument("--skip-queries", action="store_true", help="Skip queries.py")
+    parser.add_argument(
+        "--only-queries-extras",
+        action="store_true",
+        help="Run only queries_extras.py (assumes base queries already imported)",
+    )
     parser.add_argument("--graphdb-url", help="Override GraphDB base URL")
     parser.add_argument("--repo", help="Override repository ID")
     parser.add_argument("--wait-seconds", type=int, default=DEFAULT_WAIT_SECONDS)
@@ -239,6 +244,10 @@ def prompt_preload_mode() -> str:
 
 def main() -> int:
     args = parse_args()
+    if args.only_queries_extras:
+        args.skip_ontology = True
+        args.skip_preload = True
+        args.skip_queries = True
 
     config_path = Path(args.config).resolve()
     if not config_path.exists():
@@ -322,12 +331,19 @@ def main() -> int:
         
         print("[OK] Preload step verified by user.")
 
+    ran_queries = False
+    ran_extras = False
+    run_extras = args.only_queries_extras
+
     # 5. QUERIES (Generate -> Move -> Manual Pause)
     if not args.skip_queries:
         print("\n--- Running queries.py ---")
         run_cmd([sys.executable, "queries.py"], cwd=root)
 
-        nt_name = cfg.get("outputs", {}).get("queries_file", "queries_Synergies.nt")
+        nt_name = cfg.get("outputs", {}).get("queries_file")
+        if not nt_name:
+            print("[ERROR] Missing outputs.queries_file in conf.yaml")
+            return 1
         nt_path = resolve_path(root, nt_name)
         if not nt_path.exists():
             nt_path = find_latest_file(
@@ -344,17 +360,51 @@ def main() -> int:
         move_and_pause(nt_path, graphdb_import_dir, base_url)
 
         print("[OK] Queries step verified by user.")
-        parser_path = root / "graphdb_to_vcd_parser.py"
-        if parser_path.exists():
-            resp = input("Do you want to export actions/events back to VCDs? [y/N]: ").strip().lower()
-            if resp in ("y", "yes"):
-                print("\n--- Running graphdb_to_vcd_parser.py ---")
-                run_cmd([sys.executable, str(parser_path)], cwd=root)
-                print("[OK] VCD export completed.")
-            else:
-                print("Skipping VCD export.")
+        ran_queries = True
+        resp = input("Do you want to run queries_extras.py now? [y/N]: ").strip().lower()
+        if resp in ("y", "yes"):
+            run_extras = True
+
+    # 6. QUERIES EXTRAS (Generate -> Move -> Manual Pause)
+    if run_extras:
+        print("\n--- Running queries_extras.py ---")
+        run_cmd([sys.executable, "queries_extras.py"], cwd=root)
+
+        extras_name = cfg.get("outputs", {}).get("queries_extras_file")
+        if not extras_name:
+            print("[ERROR] Missing outputs.queries_extras_file in conf.yaml")
+            return 1
+        extras_path = resolve_path(root, extras_name)
+        if not extras_path.exists():
+            extras_path = find_latest_file(
+                root,
+                [
+                    "queries_extras.nt",
+                    "queries_extras*.nt",
+                    "queries_*extras*.nt",
+                    "queries_hardbrake_pedestrian_extras.nt",
+                ],
+            )
+        if not extras_path:
+            print("No .nt output file found after queries_extras.py")
+            return 1
+        move_and_pause(extras_path, graphdb_import_dir, base_url)
+
+        print("[OK] Queries extras step verified by user.")
+        ran_extras = True
+
+    # 7. OPTIONAL VCD EXPORT
+    parser_path = root / "graphdb_to_vcd_parser.py"
+    if parser_path.exists() and (ran_queries or ran_extras):
+        resp = input("Do you want to export actions/events back to VCDs? [y/N]: ").strip().lower()
+        if resp in ("y", "yes"):
+            print("\n--- Running graphdb_to_vcd_parser.py ---")
+            run_cmd([sys.executable, str(parser_path)], cwd=root)
+            print("[OK] VCD export completed.")
         else:
-            print("[WARN] graphdb_to_vcd_parser.py not found; skipping VCD export.")
+            print("Skipping VCD export.")
+    elif not parser_path.exists():
+        print("[WARN] graphdb_to_vcd_parser.py not found; skipping VCD export.")
 
     print("\nPipeline finished successfully")
     return 0

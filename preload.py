@@ -169,7 +169,7 @@ def write_metrics_csv(rows, path="Final.csv"):
 def fetch_categories():
     """Discover ontology classes grouped as Dynamic/Static/Movable via the ontology API."""
     Dyn = read_params["classes"]["Dynamic"]
-    Mov = read_params["classes"].get("Movable", None)  # Synergies ya no lo usa
+    Mov = read_params["classes"].get("Movable", None)  # Synergies no longer uses it
     Stat = read_params["classes"]["Static"]
 
     categories = {"dynamic": set(), "static": set(), "movable": set()}
@@ -451,16 +451,16 @@ def process_vcd(v):
         # Timestamp and ego transform extraction per frame
         frame_properties = myVCD.get_frame(frame_id).get('frame_properties', {})
 
-        # --- timestamp seguro ---
+        # --- safe timestamp ---
         timestamp = None
         timestamp_val = frame_properties.get('timestamp')
         if timestamp_val is not None:
             try:
                 timestamp = int(timestamp_val)
             except (TypeError, ValueError):
-                timestamp = None  # por si viene string raro
+                timestamp = None  # in case a weird string comes in
 
-        # --- ego rotation segura ---
+        # --- safe ego rotation ---
         ego_rot = None
         transforms = frame_properties.get('transforms', {}).get('vehicle-iso8855_to_odom', {})
         if isinstance(transforms, dict) and 'odometry_xyzypr' in transforms:
@@ -469,7 +469,7 @@ def process_vcd(v):
         frame_objects = myVCD.get_frame(frame_id).get('objects', {})
         for obj_uid, obj_data in frame_objects.items():
             if obj_uid != ego_vehicle:
-                # Non-ego objects: attach attributes to their per-frame nodese
+                # Non-ego objects: attach attributes to their per-frame nodes
                 if 'object_data' in obj_data and obj_data['object_data']:
                     frame_instance = f"{object_dic[obj_uid]}_frame_{frame_id}"
                     if frame_instance in scene_data:
@@ -740,4 +740,4 @@ if __name__ == '__main__':
     print('All temporary files have been removed.')
 
 
-#nohup python3 mi_script.py &
+# nohup python3 my_script.py &

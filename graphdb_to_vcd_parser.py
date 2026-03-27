@@ -404,6 +404,34 @@ class VcdEventsActionsInserter:
                     set_mode=SetMode.union,
                 )
 
+            if sem_type == "BrakingHardWithPedestrianCrossing" and len(parts) >= 3:
+                brake_val = self.thresholds.get("brake")
+                if brake_val is not None:
+                    vcd_obj.add_action_data(
+                        uid=uid,
+                        action_data=types.num("threshold_braking_value", brake_val),
+                        frame_value=(st, en),
+                        set_mode=SetMode.union,
+                    )
+                vcd_obj.add_action_data(
+                    uid=uid,
+                    action_data=types.text("vehicle", parts[0]),
+                    frame_value=(st, en),
+                    set_mode=SetMode.union,
+                )
+                vcd_obj.add_action_data(
+                    uid=uid,
+                    action_data=types.text("pedestrian", parts[1]),
+                    frame_value=(st, en),
+                    set_mode=SetMode.union,
+                )
+                vcd_obj.add_action_data(
+                    uid=uid,
+                    action_data=types.text("lane", parts[2]),
+                    frame_value=(st, en),
+                    set_mode=SetMode.union,
+                )
+
             if sem_type == "AceleratingHard" and len(parts) >= 1:
                 accel_val = self.thresholds.get("acceleration")
                 if accel_val is not None:
@@ -576,6 +604,34 @@ class VcdEventsActionsInserter:
                     set_mode=SetMode.union,
                 )
 
+            if sem_type == "HardBrakeWithPedestrianCrossing" and len(parts) >= 3:
+                brake_val = self.thresholds.get("brake")
+                if brake_val is not None:
+                    vcd_obj.add_event_data(
+                        uid=uid,
+                        event_data=types.num("threshold_braking_value", brake_val),
+                        frame_value=frm,
+                        set_mode=SetMode.union,
+                    )
+                vcd_obj.add_event_data(
+                    uid=uid,
+                    event_data=types.text("vehicle", parts[0]),
+                    frame_value=frm,
+                    set_mode=SetMode.union,
+                )
+                vcd_obj.add_event_data(
+                    uid=uid,
+                    event_data=types.text("pedestrian", parts[1]),
+                    frame_value=frm,
+                    set_mode=SetMode.union,
+                )
+                vcd_obj.add_event_data(
+                    uid=uid,
+                    event_data=types.text("lane", parts[2]),
+                    frame_value=frm,
+                    set_mode=SetMode.union,
+                )
+
             if sem_type == "HardAcceleration" and len(parts) >= 1:
                 accel_val = self.thresholds.get("acceleration")
                 if accel_val is not None:
@@ -720,6 +776,7 @@ def main() -> None:
          {prefix_alias}:CuttingIn
          {prefix_alias}:CuttingOut
          {prefix_alias}:BrakingHard
+         {prefix_alias}:BrakingHardWithPedestrianCrossing
          {prefix_alias}:Following
        }}
        FILTER (?type != owl:Thing)
@@ -741,6 +798,7 @@ def main() -> None:
          {prefix_alias}:PedestrianOnLane
          {prefix_alias}:HardAcceleration
          {prefix_alias}:HardBrake
+         {prefix_alias}:HardBrakeWithPedestrianCrossing
          {prefix_alias}:Follows
        }}
        FILTER (?type != owl:Thing)

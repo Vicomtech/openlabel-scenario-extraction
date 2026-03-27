@@ -5,8 +5,9 @@ This project runs a pipeline that:
 2) creates the repository if needed,
 3) imports the ontology,
 4) converts VCD JSON files to RDF (Synergies.nq),
-5) detects events/actions with SPARQL (queries_Synergies.nt),
-6) optionally writes those actions/events back into VCD files.
+5) detects base events/actions with SPARQL (queries_Synergies.nt),
+6) optionally runs extra queries that depend on the base ones (queries_extras),
+7) optionally writes those actions/events back into VCD files.
 
 ## Configuration (conf.yaml)
 Edit `conf.yaml` before running the pipeline if you need to change paths, ports, or repository names.
@@ -18,6 +19,7 @@ Edit `conf.yaml` before running the pipeline if you need to change paths, ports,
 - `endpoint_url`: full GraphDB SPARQL endpoint.
 - `api`: optional class discovery API (used in preload).
 - `thresholds`: numerical thresholds used for event/action detection.
+- `outputs.queries_extras_file`: output file for queries_extras (depends on base queries).
 
 ## Run the pipeline
 From the repository root, run:
@@ -35,7 +37,9 @@ The script will:
 6) pause and ask you to import `Synergies.nq` manually,
 7) run `queries.py` and generate `queries_Synergies.nt`,
 8) pause and ask you to import `queries_Synergies.nt` manually,
-9) ask if you want to export actions/events back to VCDs.
+9) ask if you want to run `queries_extras.py` (requires base queries already imported),
+10) if yes, it generates `queries_extras` and asks you to import it,
+11) ask if you want to export actions/events back to VCDs.
 
 ## Preload mode prompt
 Before running `preload.py`, the script asks:
@@ -62,6 +66,14 @@ When the console tells you to import queries:
 
 ![Queries import](./assets/images/queries.png)
 
+### Import `queries_extras`
+`queries_extras.py` depends on the base queries being already imported.
+When the console tells you to import queries_extras:
+1) Open **Import -> Server Files** again.
+2) Select the file from `conf.yaml -> outputs.queries_extras_file`
+   (default: `queries_hardbrake_pedestrian_extras2.nt`).
+3) Click **Import** and wait for it to finish.
+
 ## Export actions/events back to VCDs
 At the end, the pipeline asks:
 
@@ -70,7 +82,7 @@ Do you want to export actions/events back to VCDs? [y/N]
 ```
 
 If you answer **yes**, it will create the output files in the folder from:
-`conf.yaml -> paths.output_dir` (default: `./vcds_pruebas_con_acciones_y_eventos/`).
+`conf.yaml -> paths.output_dir` (default: `./vcds_pruebas_output_extras/`).
 
 This will read the RDF in GraphDB and write the enriched VCDs into `paths.output_dir`.
 
@@ -84,6 +96,10 @@ You can skip steps if you only want to repeat a part:
 - Re-run only `queries.py` (skip ontology + preload):
   ```powershell
   python .\run_pipeline.py --skip-ontology --skip-preload
+  ```
+- Run only `queries_extras.py` (base queries already imported):
+  ```powershell
+  python .\run_pipeline.py --only-queries-extras
   ```
 - Run without starting Docker (GraphDB already running):
   ```powershell
