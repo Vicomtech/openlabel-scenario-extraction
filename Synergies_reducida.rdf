@@ -1,0 +1,865 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.semanticweb.org/vicomtech/ontologies/nuscenes#"
+     xml:base="http://www.semanticweb.org/vicomtech/ontologies/nuscenes"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:synergies="http://www.semanticweb.org/vicomtech/ontologies/synergies#">
+    <owl:Ontology rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies">
+        <rdfs:comment xml:lang="en">Version 0.5.1: Contains all the classes, relationships and attributes of the objects that participate in each scene, plus imformation about the ego_vehicle (velocities of the dynamic objects, information of CAN bus, distance between every object and the ego vehicle).
+
+Version 0.5.2: We added the classes, relationships and attributes related to the maps
+
+Version 0.5.3: We added the classes, relationships and attributes related to the scenarios we want to infer (look class Event)
+
+Version 0.5.4: We removed the super-property ego_data. Now every property of the class EgoData is listed along with the rest of the properties and they are not grouped under a &quot;dummy&quot; property. Additionally, we changed the names of some EgoData properties, to align them with the names defined by the CAN bus inside the VCD. Finally, the position coordinates of the ego_vehicle is stored as an attribute of the class Position (as for any other dynamic and movable object) and not as attribute of the class EgoData. This was necessary in order to provide a common ground for the association of the class Position with the Lane (Position -&gt; isLocatedIn -&gt; Lane).
+
+Version 0.5.4: To align with the attribute names of the VCD, we changed the names of some attributes.
+
+Version 0.5.5: Full CAN_bus data ingestIon. Old structure of ontology with the framestamp of each object data instance stored as attribute of the class Frame. 
+
+Version 0.5.6: Visibility is not included in the ontology. Frame, Map and File classes were deleted. Framestamp is stored as attribute of the class ObjectData. Unification of relationships (hasPosition, hasAttribute etc. is replaced by hasData). The region property for each actor (front_of_ego, right_of_ego, left_of_ego, rear_of_ego) is added as attribute of the class Position. Also, for understanding which EgoData instance corresponds to each Scene (since we have only one ego_vehicle instance for all scenes): Scene -&gt; hasEgoData -&gt; EgoData
+
+
+Version 0.5.6.1: For every dynamic object we also store the velocity vector (in the past we stored the vector only for the ego_vehicle and velX, velY, velZ were attributes of the class EgoData). These attributes now belong to the class Velocity (to generalise for the rest of the vehicles), thus, it will have as properties: velocity, velX, velY, velZ. So: Dynamic/ego_vehicle -&gt; hasData -&gt; Velocity. Also added the data properties rear_of_ego, front_of_ego, right_of_ego and left_of_ego as attributes of the class Position for expressing the region (around ego_vehicle) in which an actor is located in each frame. 
+
+Version 0.5.7: Attemps to replace all object data classes (Attribute, Postion, Rotation etc.) with a unique class named ObjectData (just like in the case of EgoData). Each object will have an ObjectData instance for each frame it participates.
+
+Version 0.5.8 (iurbieta): 
+    - Ontology IRI redefinition (more generic).
+    - Set subclass relation among main classes and owl:Thing.
+    - Include &quot;Lane invasion&quot; event class.
+
+Version 0.5.9 (aescribano)
+    -Added relationships: hasObjectFrom, hasObjectTo</rdfs:comment>
+        <owl:versionInfo>0.5.8</owl:versionInfo>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#description -->
+
+    <owl:AnnotationProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#description"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#hasData -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#hasData">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#object"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <synergies:description>links an object to FrameData containing its attributes at each frame</synergies:description>
+        <rdfs:label>hasData</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#hasObject -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#hasObject">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#object"/>
+        <synergies:description>associates an action, event or scene with an object it contains</synergies:description>
+        <rdfs:comment>Is not taken into account in the graphDB since the &quot;participatesIn&quot; relation expresses the inverse of this property (Scene -&gt; hasObject -&gt; Object). For the moment we do not utilise this relation in order not to overload the database with redundant information and triples. We keep it defined in the ontology in case in the future we decide that it is useful.</rdfs:comment>
+        <rdfs:label>hasObject</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#hasUIDinVCD -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#hasUIDinVCD">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#object"/>
+        <synergies:description>the obejct&apos;s identifier(UID) in the VCD</synergies:description>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#isLocatedIn -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#isLocatedIn">
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <synergies:description>The lane that corresponds to the position coordinates of an object.</synergies:description>
+        <rdfs:label>isLocatedIn</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#isNextTo -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#isNextTo">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE"/>
+        <synergies:description>indicates that two entities are adjacent or close to each other</synergies:description>
+        <rdfs:label>isNextTo</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#isPartOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#isPartOf">
+        <synergies:description>relates a static map element to its container (e.g., lane/shoulder/sidewalk/parking/median/border/none/bidirectional -&gt; section; section -&gt; road). Not used for dynamic positions; use isLocatedIn for per-frame location.</synergies:description>
+        <rdfs:comment>Map containment used for this dataset:
+SECTION -&gt; isPartOf -&gt; ROAD
+BIDIRECTIONAL -&gt; isPartOf -&gt; SECTION
+LANE/SHOULDER/SIDEWALK/PARKING/MEDIAN/BORDER/NONE -&gt; isPartOf -&gt; SECTION</rdfs:comment>
+        <rdfs:label>isPartOf</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vector -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vector">
+        <rdfs:label>acceleration_vector</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vectorX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vectorX">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vector"/>
+        <rdfs:label>acceleration_vectorX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vectorY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vectorY">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vector"/>
+        <rdfs:label>acceleration_vectorY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vectorZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vectorZ">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#acceleration_vector"/>
+        <rdfs:label>acceleration_vectorZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3D -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3D">
+        <synergies:description>3D bounding box representing object dimensions and position</synergies:description>
+        <rdfs:label>bbox3D</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3DX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3DX">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3D"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>X dimension of the 3D bounding box</synergies:description>
+        <rdfs:label>bbox3DX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3DY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3DY">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3D"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Y dimension of the 3D bounding box</synergies:description>
+        <rdfs:label>bbox3DY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3DZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3DZ">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3D"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+        <synergies:description>Z dimension of the 3D bounding box</synergies:description>
+        <rdfs:label>bbox3DZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3Drotation -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3Drotation">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#bbox3D"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <synergies:description>rotation information of the 3D bounding box</synergies:description>
+        <rdfs:label>bbox3Drotation</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#lateralPos -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#lateralPos">
+        <rdfs:label>lateralPos</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#longitudinalPos -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#longitudinalPos">
+        <rdfs:label>longitudinalPos</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vector -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vector">
+        <rdfs:label>velocity_vector</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vectorX -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vectorX">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vector"/>
+        <rdfs:label>velocity_vectorX</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vectorY -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vectorY">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vector"/>
+        <rdfs:label>velocity_vectorY</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vectorZ -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vectorZ">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#velocity_vector"/>
+        <rdfs:label>velocity_vectorZ</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#AMBULANCE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#AMBULANCE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>AMBULANCE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ANIMAL -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ANIMAL">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectType"/>
+        <rdfs:label>ANIMAL</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#BICYCLE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#BICYCLE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>BICYCLE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#BIDIRECTIONAL -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#BIDIRECTIONAL">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>BIDIRECTIONAL</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#BIKING -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#BIKING">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>BIKING</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#BORDER -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#BORDER">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>BORDER</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#BUS -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#BUS">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>BUS</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#CAR -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#CAR">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>CAR</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#CIVIL -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#CIVIL">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>CIVIL</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#COMPACT_CAR -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#COMPACT_CAR">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>COMPACT_CAR</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#CONNECTINGRAMP -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#CONNECTINGRAMP">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>CONNECTINGRAMP</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#CURB -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#CURB">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>CURB</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#DELIVERY_VAN -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#DELIVERY_VAN">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>DELIVERY_VAN</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#DRIVING -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#DRIVING">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>DRIVING</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ENTRY -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ENTRY">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>ENTRY</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#EXIT -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#EXIT">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>EXIT</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#FIRE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#FIRE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>FIRE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <synergies:description>contains the data for all the frames in the scenes</synergies:description>
+        <rdfs:label>FrameData</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#GARBAGE_COLLECTION -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#GARBAGE_COLLECTION">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>GARBAGE_COLLECTION</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#HEAVY_TRUCK -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#HEAVY_TRUCK">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>HEAVY_TRUCK</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#LANE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <owl:disjointWith rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#dynamic"/>
+        <synergies:description>a specific strip of road designated for vehicle travel in a particular direction</synergies:description>
+        <rdfs:label>LANE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#LUXURY_CAR -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#LUXURY_CAR">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>LUXURY_CAR</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#MEDIAN -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#MEDIAN">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>MEDIAN</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#MILITARY -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#MILITARY">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>MILITARY</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#MOTORBIKE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#MOTORBIKE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>MOTORBIKE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectType -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectType">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#dynamic"/>
+        <rdfs:label>MovingObjectType</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#VEHICLE"/>
+        <rdfs:label>MovingObjectVehicleClassificationRole</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#VEHICLE"/>
+        <rdfs:label>MovingObjectVehicleClassificationType</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#NONE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#NONE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>NONE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#OFFRAMP -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#OFFRAMP">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>OFFRAMP</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ONRAMP -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ONRAMP">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>ONRAMP</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#OTHER -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#OTHER">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectType"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>OTHER</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ObjectData">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#FrameData"/>
+        <synergies:description>contains the data related to the objects detected in the scenes</synergies:description>
+        <rdfs:label>ObjectData</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#PARKING -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#PARKING">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>PARKING</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#PEDESTRIAN -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#PEDESTRIAN">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectType"/>
+        <rdfs:label>PEDESTRIAN</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#POLICE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#POLICE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>POLICE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#PUBLIC_TRANSPORT -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#PUBLIC_TRANSPORT">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>PUBLIC_TRANSPORT</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#RESTRICTED -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#RESTRICTED">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>RESTRICTED</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ROAD -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ROAD">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>ROAD</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ROAD_ASSISTANCE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ROAD_ASSISTANCE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>ROAD_ASSISTANCE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#ROAD_CONSTRUCTION -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#ROAD_CONSTRUCTION">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:label>ROAD_CONSTRUCTION</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#SECTION -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#SECTION">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>SECTION</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#SEMITRACTOR -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#SEMITRACTOR">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>SEMITRACTOR</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#SEMITRAILER -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#SEMITRAILER">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>SEMITRAILER</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#SHOULDER -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#SHOULDER">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>SHOULDER</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#SIDEWALK -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#SIDEWALK">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>SIDEWALK</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#SLIPLANE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#SLIPLANE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>SLIPLANE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#SMALL_CAR -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#SMALL_CAR">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>SMALL_CAR</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#STANDUP_SCOOTER -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#STANDUP_SCOOTER">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>STANDUP_SCOOTER</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#STOP -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#STOP">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>STOP</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#TRAILER -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#TRAILER">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>TRAILER</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#TRAIN -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#TRAIN">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>TRAIN</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#TRAM -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#TRAM">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>TRAM</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#UNKNOWN -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#UNKNOWN">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectType"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationRole"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>UNKNOWN</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#VEHICLE -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#VEHICLE">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectType"/>
+        <rdfs:label>VEHICLE</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#WALKING -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#WALKING">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <rdfs:label>WALKING</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#WHEELCHAIR -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#WHEELCHAIR">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#MovingObjectVehicleClassificationType"/>
+        <rdfs:label>WHEELCHAIR</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#dynamic -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#dynamic">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#object"/>
+        <owl:disjointWith rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#static"/>
+        <synergies:description>objects that move or change position over time</synergies:description>
+        <rdfs:label>dynamic</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#object -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#object">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <synergies:description>a  category for any detected item in the scene</synergies:description>
+        <rdfs:label>object</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#scene -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#scene">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <synergies:description>is a sequence of frames that includes frames, objects, relationships, metadata, and other relevant information, representing a specific period or situation captured</synergies:description>
+        <rdfs:label>scene</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#static -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#static">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#object"/>
+        <synergies:description>objects that do not move</synergies:description>
+        <rdfs:label>static</rdfs:label>
+    </owl:Class>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi -->
+

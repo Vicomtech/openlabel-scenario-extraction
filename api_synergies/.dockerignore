@@ -4,11 +4,11 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Entornos virtuales
+# Virtual environments
 venv/
 .env
 
-# Archivos de sistema
+# System files
 .DS_Store
 Thumbs.db
 
@@ -16,11 +16,11 @@ Thumbs.db
 .git
 .gitignore
 
-# IDEs / editores
+# IDEs / editors
 .vscode/
 .idea/
 
-# Archivos de pruebas locales
+# Local test files
 *.sqlite
 .coverage
 pytest_cache/

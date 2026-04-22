@@ -1716,6 +1716,14 @@ LANE/SHOULDER/SIDEWALK/PARKING/MEDIAN/BORDER/NONE -&gt; isPartOf -&gt; SECTION</
     
 
 
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#BrakingHardWithPedestrianCrossing -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#BrakingHardWithPedestrianCrossing">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Action"/>
+    </owl:Class>
+    
+
+
     <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#CAR -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#CAR">
@@ -1920,6 +1928,14 @@ LANE/SHOULDER/SIDEWALK/PARKING/MEDIAN/BORDER/NONE -&gt; isPartOf -&gt; SECTION</
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
         <synergies:description>When a vehicle applies heavy braking</synergies:description>
         <rdfs:label>HardBrake</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/vicomtech/ontologies/synergies#HardBrakeWithPedestrianCrossing -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/vicomtech/ontologies/synergies#HardBrakeWithPedestrianCrossing">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/vicomtech/ontologies/synergies#Event"/>
     </owl:Class>
     
 

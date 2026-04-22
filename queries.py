@@ -8,7 +8,7 @@ from rdflib import Graph, Namespace, URIRef, Literal
 from rdflib.namespace import RDF, XSD
 
 # ------------------------------------------------------
-#                  CONFIGURACIÓN                      #
+#                  CONFIGURATION                      #
 # ------------------------------------------------------
 with open('./conf.yaml') as fh:
     read_params = yaml.load(fh, Loader=yaml.FullLoader)
@@ -28,14 +28,15 @@ THRESHOLD_CUT_IN        = read_params['thresholds']['cut_in_distance_to_ego']
 THRESHOLD_CUT_OUT        = read_params['thresholds']['cut_out_distance_to_ego']
 THRESHOLD_NEAR_MISS_COLLISION = read_params['thresholds']['near_miss_collision']
 THRESHOLD_FOLLOWING    = read_params['thresholds']['following_distance']
+MAX_BRAKE_PED_GAP_FRAMES = read_params["thresholds"]["brake_ped_gap_frames"]
 
-# Grafo RDF global
+# Global RDF graph
 graph = Graph()
 NS    = Namespace(ontology_uri)
 graph.bind(pref_str, ontology_uri)
 
 # ------------------------------------------------------
-#                FUNCIONES DE AYUDA                     #
+#                HELPER FUNCTIONS                       #
 # ------------------------------------------------------
 def get_local_name(uri: str) -> str:
     if "#" in uri:
@@ -72,42 +73,57 @@ def send_select_query(endpoint: str, query: str) -> Optional[dict]:
         print(f"[ERROR] executing SELECT: {e}")
         return None
 
+
+def serialize_graph(output_file: str) -> None:
+    if len(graph):
+        output_dir = os.path.dirname(output_file)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+        graph.serialize(
+            destination=output_file,
+            format="nt",
+            encoding="utf-8",
+        )
+        print(f"Tripletas serializadas en {output_file}")
+    else:
+        print("No se generaron tripletas.")
+
 # ------------------------------------------------------------------
-# Caché (escena, objeto)  →  uid
+# Cache (scene, object)  →  uid
 # ------------------------------------------------------------------
 from typing import Dict, Tuple
 
 _uid_cache: Dict[Tuple[str, str], str] = {}
 
 # ------------------------------------------------------------------
-#  Caché global   ( escena IRI , objeto IRI )  →  uid (string)
+#  Global cache   ( scene IRI , object IRI )  →  uid (string)
 # ------------------------------------------------------------------
 from typing import Dict, Tuple
 _uid_cache: Dict[Tuple[str, str], str] = {}
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  Cache global  {(scene_iri, obj_iri) → uid_string}
+#  Global cache  {(scene_iri, obj_iri) → uid_string}
 # ─────────────────────────────────────────────────────────────────────────────
 _uid_cache: dict[tuple[str, str], str] = {}
 
 # ─────────────────────────────────────────────────────────────────────────────
 def get_vcd_uid(scene_iri: str, obj_iri: str) -> str:
     """
-    Devuelve el valor de :hasUIDinVCD para <obj_iri> dentro del grafo de <scene_iri>.
-    Si no existe, retorna el local-name del objeto.
-    Resultados cacheados por (scene_iri, obj_iri).
+    Return the value of :hasUIDinVCD for <obj_iri> inside the <scene_iri> graph.
+    If it does not exist, return the object's local-name.
+    Results are cached by (scene_iri, obj_iri).
     """
     key = (scene_iri, obj_iri)
     if key in _uid_cache:
         return _uid_cache[key]
 
-    # 1) Obtener el nombre de la escena  (scene-0908, scene-0502, …)
-    scene_name  = get_local_name(scene_iri)                 # p.ej. "scene-0908"
+    # 1) Get the scene name (scene-0908, scene-0502, …)
+    scene_name  = get_local_name(scene_iri)                 # e.g. "scene-0908"
 
-    # 2) Construir la IRI del grafo nombrado
-    graph_iri   = f"http://www.openrdf.org/Synergies/{scene_name}"            # ej. http://www.openrdf.org/nuScenes/scene-0908
+    # 2) Build the named graph IRI
+    graph_iri   = f"http://www.openrdf.org/Synergies/{scene_name}"            # e.g. http://www.openrdf.org/nuScenes/scene-0908
 
-    # 3) Consulta SPARQL dentro de ese grafo
+    # 3) SPARQL query inside that graph
     sparql = f"""
 PREFIX {pref_str}: <{ontology_uri}>
 SELECT ?uid
@@ -120,20 +136,20 @@ LIMIT 1
 """
     res = send_select_query(SPARQL_SELECT_ENDPOINT, sparql)
 
-    # 4) Extraer resultado o usar el local-name como último recurso
+    # 4) Extract result or use the local-name as a last resort
     if res and res["results"]["bindings"]:
         val = res["results"]["bindings"][0]["uid"]["value"]
     else:
         val = get_local_name(obj_iri)
 
-    # 5) Cachear y devolver
+    # 5) Cache and return
     _uid_cache[key] = val
     return val
 
 
 
 # ------------------------------------------------------
-#       GENERACIÓN DE IRIs DETERMINISTAS                #
+#       DETERMINISTIC IRI GENERATION                    #
 # ------------------------------------------------------
 def make_event_iri(event_type: str, scene_local: str, obj_locals: List[str], frame: int) -> URIRef:
     objs  = "-".join(safe_name(o) for o in obj_locals)
@@ -156,7 +172,7 @@ def make_object_frame_iri(obj_iri: str, frame: int) -> URIRef:
     return URIRef(ontology_uri + f"{obj_local}_frame_{frame}")
 
 # ------------------------------------------------------
-#         FUNCIONES DE INSERCIÓN DE TRIPLETAS           #
+#         TRIPLE INSERTION FUNCTIONS                    #
 # ------------------------------------------------------
 
 def add_pedestrian_event(scene: str,  ped: str, pc: str, frame: int) -> None:
@@ -274,6 +290,54 @@ def add_hard_brake_action(scene: str, veh: str, start: int, end: int) -> None:
     graph.add((V,   NS.participatesIn,  act))
 
 
+def add_hard_brake_with_ped_event(scene: str, veh: str, ped: str, lane: str, frame: int) -> None:
+    S, V, P, L = URIRef(scene), URIRef(veh), URIRef(ped), URIRef(lane)
+    veh_uid = get_vcd_uid(scene, veh)
+    ped_uid = get_vcd_uid(scene, ped)
+    lane_uid = get_vcd_uid(scene, lane)
+    evt = make_event_iri(
+        "HardBrakeWithPedestrianCrossing",
+        get_local_name(scene),
+        [veh_uid, ped_uid, lane_uid],
+        frame,
+    )
+    graph.add((S,   NS.hasEvent,       evt))
+    graph.add((evt, RDF.type,          NS.HardBrakeWithPedestrianCrossing))
+    graph.add((evt, NS.eventID,        Literal(f"{veh_uid}_{ped_uid}_{lane_uid}_frame{frame}")))
+    graph.add((evt, NS.framestamp,     Literal(frame, datatype=XSD.integer)))
+    graph.add((evt, NS.hasObject,      V))
+    graph.add((evt, NS.hasObject,      P))
+    graph.add((evt, NS.hasObject,      L))
+    graph.add((V,   NS.participatesIn, evt))
+    graph.add((P,   NS.participatesIn, evt))
+    graph.add((L,   NS.participatesIn, evt))
+
+
+def add_hard_brake_with_ped_action(scene: str, veh: str, ped: str, lane: str, start: int, end: int) -> None:
+    S, V, P, L = URIRef(scene), URIRef(veh), URIRef(ped), URIRef(lane)
+    veh_uid = get_vcd_uid(scene, veh)
+    ped_uid = get_vcd_uid(scene, ped)
+    lane_uid = get_vcd_uid(scene, lane)
+    act = make_action_iri(
+        "BrakingHardWithPedestrianCrossing",
+        get_local_name(scene),
+        [veh_uid, ped_uid, lane_uid],
+        start,
+        end,
+    )
+    graph.add((S,   NS.hasAction,       act))
+    graph.add((act, RDF.type,           NS.BrakingHardWithPedestrianCrossing))
+    graph.add((act, NS.actionID,        Literal(f"{veh_uid}_{ped_uid}_{lane_uid}_frames{start}_{end}")))
+    graph.add((act, NS.start_framestamp,Literal(start, datatype=XSD.integer)))
+    graph.add((act, NS.end_framestamp,  Literal(end,   datatype=XSD.integer)))
+    graph.add((act, NS.hasObject,       V))
+    graph.add((act, NS.hasObject,       P))
+    graph.add((act, NS.hasObject,       L))
+    graph.add((V,   NS.participatesIn,  act))
+    graph.add((P,   NS.participatesIn,  act))
+    graph.add((L,   NS.participatesIn,  act))
+
+
 def add_lane_change_action(scene: str, l1: str, l2: str, veh: str, start: int, end: int) -> None:
     S, L1, L2, V = URIRef(scene), URIRef(l1), URIRef(l2), URIRef(veh)
     l1_uid = get_vcd_uid(scene, l1)
@@ -341,7 +405,7 @@ def add_following_action(scene: str, veh: str, start: int, end: int,  ego_vehicl
     S, V, EGO = URIRef(scene), URIRef(veh) , URIRef(ego_vehicle)
     veh_uid = get_vcd_uid(scene, veh)
     ego_uid = get_vcd_uid(scene, ego_vehicle)
-    # IRI para el intervalo de seguimiento (acción que dura más de un fotograma)
+    # IRI for the following interval (action lasting more than one frame)
     act = make_action_iri("Following", get_local_name(scene), [veh_uid, ego_uid], start, end)
     graph.add((S,   NS.hasAction,       act))
     graph.add((act, RDF.type,           NS.Following))
@@ -357,7 +421,7 @@ def add_follows_event(scene: str, veh: str, framestamp: int,  ego_vehicle: str) 
     S, V, EGO = URIRef(scene), URIRef(veh) , URIRef(ego_vehicle)
     veh_uid = get_vcd_uid(scene, veh)
     ego_uid = get_vcd_uid(scene, ego_vehicle)
-    # IRI para el evento de seguimiento (evento con un solo fotograma)
+    # IRI for the following event (single-frame event)
     event = make_event_iri("Follows", get_local_name(scene), [veh_uid, ego_uid], framestamp)
     graph.add((S,   NS.hasEvent,        event))
     graph.add((event, RDF.type,         NS.Follows))
@@ -396,7 +460,7 @@ def add_near_miss_action(scene: str, ego: str, obj: str,
     graph.add((act,    NS.actionID,        Literal(f"{obj_uid}_{ego_uid}_frames_{start}_{end}")))
     graph.add((act,    NS.start_framestamp,Literal(start, datatype=XSD.integer)))
     graph.add((act,    NS.end_framestamp,  Literal(end,   datatype=XSD.integer)))
-    # anotar un triple ttc por cada frame del rango
+    # annotate one ttc triple per frame in the range
     #for f, t in ttc_map.items():
         #graph.add((act, NS.ttc, Literal(t, datatype=XSD.float)))
     graph.add((act,    NS.hasObject,       E))
@@ -434,10 +498,10 @@ def add_pedestrian_lane_action(scene: str, ped: str, lane: str, start: int, end:
     graph.add((L,   NS.participatesIn,  act))
 
 # ------------------------------------------------------
-#  FUNCIONES PRINCIPALES (SELECT + PROCESAMIENTO)       #
+#  MAIN FUNCTIONS (SELECT + PROCESSING)                 #
 # ------------------------------------------------------
 def add_scene_filter() -> str:
-    return ""  # sin filtro de escena
+    return ""  # no scene filter
 
 def handle_normal_vehicle_lane_change():
     filter_str = add_scene_filter()
@@ -670,7 +734,7 @@ WHERE {{
   FILTER(?de > 0)
   FILTER(?de < {THRESHOLD_CUT_IN})
 
-  # rotación: diferencia angular normalizada usando cos (evita salto ±pi)
+  # rotation: normalized angular difference using cos (avoids ±pi jump)
   BIND(ofn:pi() AS ?pi)
   BIND((?rv - ?rh) AS ?drot)
   BIND(ofn:cos(?drot) AS ?cosd)
@@ -750,7 +814,7 @@ WHERE {{
   FILTER(?de > 0)
   FILTER(?de < {THRESHOLD_CUT_OUT})
 
-  # rotación: diferencia angular normalizada usando cos (evita salto ±pi)
+  # rotation: normalized angular difference using cos (avoids ±pi jump)
   BIND(ofn:pi() AS ?pi)
   BIND((?rv - ?rh) AS ?drot)
   BIND(ofn:cos(?drot) AS ?cosd)
@@ -784,7 +848,7 @@ ORDER BY ?scene ?v ?h ?f2
 
 
 
-####################################################### DIFERENTES DE NUSCENES ########################
+####################################################### DIFFERENT FROM NUSCENES ########################
 def handle_pedestrian_crosses_zebra_action_and_event():
     select_query = f"""
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -813,7 +877,7 @@ ORDER BY ?s ?p ?f
     if not res:
         return
 
-    # agrupamos por (escena, peatón) todas las marcas de tiempo
+    # group by (scene, pedestrian) all timestamps
     group_data: Dict[Tuple[str,str,str], List[int]] = defaultdict(list)
     for b in res["results"]["bindings"]:
         scene_iri = b["s"]["value"]
@@ -822,14 +886,14 @@ ORDER BY ?s ?p ?f
         f         = int(b["f"]["value"])
         group_data[(scene_iri, ped_iri, pc_iri)].append(f)
 
-    # por cada (escena, peatón) generamos evento o acción
+    # for each (scene, pedestrian) generate an event or action
     for (scene_iri, ped_iri, pc_iri), frames in group_data.items():
         unique_frames = sorted(set(frames))
-        # un solo frame => evento
+        # single frame => event
         if len(unique_frames) == 1:
             add_pedestrian_event(scene_iri, ped_iri, pc_iri, unique_frames[0])
         else:
-            # varios frames => acción en cada bloque consecutivo
+            # multiple frames => action for each consecutive block
             for iv in group_consecutive_frames(unique_frames):
                 if len(iv) == 1:
                     add_pedestrian_event(scene_iri, ped_iri, pc_iri ,  iv[0])
@@ -900,7 +964,7 @@ SELECT
   (MIN(?fs1) AS ?start)
   (MAX(?fs2) AS ?end)
 WHERE {{
-  # Escena, su EgoData y el ego_vehicle
+  # Scene, its EgoData and the ego_vehicle
   ?scene a {pref_str}:scene ;
          {pref_str}:hasEgoData  ?ed ;
          {pref_str}:hasObject   ?l1, ?l2, ?v .
@@ -910,13 +974,13 @@ WHERE {{
          {pref_str}:isLocatedIn  ?l2 .
   ?ego   {pref_str}:hasData     ?ed .
 
-  # Carriles
+  # Lanes
   ?l1 a {pref_str}:LANE .
   ?l2 a {pref_str}:LANE ;
       {pref_str}:isNextTo       ?l1 .
   FILTER(?l1 != ?l2)
 
-  # Vehículo candidato al cut-in
+  # Cut-in candidate vehicle
   ?v a {pref_str}:VEHICLE ;
      {pref_str}:hasData       ?od1, ?od2 .
   ?od1 a {pref_str}:ObjectData ;
@@ -945,7 +1009,7 @@ GROUP BY ?scene ?v ?ego ?l1 ?l2
     if not res:
         return
 
-    # Cada resultado ya trae el intervalo mínimo–máximo
+    # Each result already includes the min–max interval
     for b in res["results"]["bindings"]:
         scene = b["scene"]["value"]
         v     = b["v"]["value"]
@@ -959,10 +1023,10 @@ GROUP BY ?scene ?v ?ego ?l1 ?l2
 
 def handle_following_action_and_event_ego():
     """
-    Detecta 'Follows' (evento) y 'Following' (acción):
-    • Para cada escena y egoVehicle
-    • Para cada fotograma: selecciona el vehículo con menor distance_to_ego
-    • Agrupa fotogramas consecutivos mientras sea el MISMO vehículo
+    Detects 'Follows' (event) and 'Following' (action):
+    - For each scene and egoVehicle
+    - For each frame: select the vehicle with the smallest distance_to_ego
+    - Group consecutive frames while it is the SAME vehicle
     """
     select_query = f"""
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -971,7 +1035,7 @@ PREFIX {pref_str}: <{ontology_uri}>
 
 SELECT DISTINCT ?scene ?egoVehicle ?veh ?frame ?d
 WHERE {{
-  # ego-frame y su carril
+  # ego-frame and its lane
   ?scene  rdf:type            {pref_str}:scene ;
           {pref_str}:hasEgoData ?egoFrame ;
           {pref_str}:hasObject ?veh .
@@ -985,7 +1049,7 @@ WHERE {{
             {pref_str}:isLocatedIn ?lane .
   ?egoVehicle {pref_str}:hasData ?egoFrame .
 
-  # candidato delante del ego en el MISMO carril
+  # candidate ahead of the ego in the SAME lane
   ?vehFrame rdf:type          {pref_str}:ObjectData ;
             {pref_str}:framestamp ?frame ;
             {pref_str}:isLocatedIn ?lane ;
@@ -1005,28 +1069,28 @@ ORDER BY ?scene ?egoVehicle ?frame
         return
 
     # --------------------------------------------------------------------------------
-    # 1)  agrupamos por (scene, egoVehicle, frame) todas las parejas (veh,distance)
+    # 1)  group by (scene, egoVehicle, frame) all pairs (veh, distance)
     # --------------------------------------------------------------------------------
     from collections import defaultdict
     by_scene_ego = defaultdict(lambda: defaultdict(list))  # {(scene,ego): {frame:[(veh,d)]}}
     for b in res["results"]["bindings"]:
         key  = (b["scene"]["value"], b["egoVehicle"]["value"])
-        fra  = int(float(b["frame"]["value"]))             # GraphDB a veces lo devuelve como 4.0
+        fra  = int(float(b["frame"]["value"]))             # GraphDB sometimes returns it as 4.0
         veh  = b["veh"]["value"]
         dist = float(b["d"]["value"])
-        # guarda solo la distancia mínima encontrada para ese coche en ese frame
+        # keep only the minimum distance found for that car in that frame
         frames = by_scene_ego[key][fra]
-        if veh in dict(frames):                       # ya lo teníamos
+        if veh in dict(frames):                       # we already had it
             prev_min = min(d for v, d in frames if v == veh)
-            if dist < prev_min:                       # nos quedamos con la menor
+            if dist < prev_min:                       # keep the smaller one
                 frames[:] = [(v, d) for v, d in frames if v != veh] + [(veh, dist)]
         else:
             frames.append((veh, dist))
 
 
     # --------------------------------------------------------------------------------
-    # 2)  recorremos los frames ordenados: elegimos el veh con distancia mínima,
-    #     construimos secuencias mientras sea el mismo veh
+    # 2)  iterate through ordered frames: choose the vehicle with the minimum distance,
+    #     build sequences while it is the same vehicle
     # --------------------------------------------------------------------------------
     for (scene, ego), frame_map in by_scene_ego.items():
         frames_sorted = sorted(frame_map.keys())
@@ -1035,7 +1099,7 @@ ORDER BY ?scene ?egoVehicle ?frame
         prev_frame    = None
 
         def _close_sequence(v, start_f, end_f):
-            if v is None:  # no hay nada abierto
+            if v is None:  # nothing open yet
                 return
             if start_f == end_f:
                 add_follows_event(scene, v, start_f, ego)
@@ -1043,26 +1107,26 @@ ORDER BY ?scene ?egoVehicle ?frame
                 add_following_action(scene, v, start_f, end_f, ego)
 
         for f in frames_sorted:
-            # vehículo más cercano en este frame
+            # closest vehicle in this frame
             nearest_veh = min(frame_map[f], key=lambda t: t[1])[0]
 
-            if nearest_veh != current_veh:      # --------- rompe la secuencia
+            if nearest_veh != current_veh:      # --------- breaks the sequence
                 _close_sequence(current_veh, seq_start, prev_frame)
                 current_veh = nearest_veh
                 seq_start   = f
-            # si es el mismo veh, simplemente continuamos
+            # if it's the same vehicle, just continue
             prev_frame = f
 
-        # cierra la última secuencia
+        # close the last sequence
         _close_sequence(current_veh, seq_start, prev_frame)
 
 def handle_following_action_and_event():
     """
-    Detecta 'Follows' (evento) y 'Following' (acción) entre vehículos:
-    - Para cada escena y vehículo seguidor
-    - Para cada fotograma: selecciona el vehículo más cercano por delante en el MISMO carril
-    - Ignora candidatos parados (velocidad < 0.5)
-    - Agrupa fotogramas consecutivos mientras sea el MISMO vehículo objetivo
+    Detects 'Follows' (event) and 'Following' (action) between vehicles:
+    - For each scene and follower vehicle
+    - For each frame: select the closest vehicle ahead in the SAME lane
+    - Ignore stopped candidates (speed < 0.5)
+    - Group consecutive frames while it is the SAME target vehicle
     """
     select_query = f"""
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -1108,13 +1172,13 @@ ORDER BY ?scene ?follower ?frame
         return
 
     # --------------------------------------------------------------------------------
-    # 1) agrupamos por (scene, follower, frame) todas las parejas (target, distance)
+    # 1) group by (scene, follower, frame) all pairs (target, distance)
     # --------------------------------------------------------------------------------
     from collections import defaultdict
     by_scene_follower = defaultdict(lambda: defaultdict(list))  # {(scene,follower): {frame:[(target,d)]}}
     for b in res["results"]["bindings"]:
         key  = (b["scene"]["value"], b["follower"]["value"])
-        fra  = int(float(b["frame"]["value"]))             # GraphDB a veces lo devuelve como 4.0
+        fra  = int(float(b["frame"]["value"]))             # GraphDB sometimes returns it as 4.0
         tgt  = b["target"]["value"]
         dist = float(b["d"]["value"])
         frames = by_scene_follower[key][fra]
@@ -1126,7 +1190,7 @@ ORDER BY ?scene ?follower ?frame
             frames.append((tgt, dist))
 
     # --------------------------------------------------------------------------------
-    # 2) recorremos frames: elegimos el target más cercano, agrupamos secuencias
+    # 2) iterate frames: pick the closest target, group sequences
     # --------------------------------------------------------------------------------
     for (scene, follower), frame_map in by_scene_follower.items():
         frames_sorted = sorted(frame_map.keys())
@@ -1154,8 +1218,8 @@ ORDER BY ?scene ?follower ?frame
 
 def handle_near_miss_action_and_event_ego():
     """
-    Detecta todos los ObjectData con TTC ≤ 1.5 s (en la misma escena, sin exigir mismo frame),
-    agrupa por (scene, egoVehicle, objeto) y crea eventos o acciones.
+    Detects all ObjectData with TTC ≤ 1.5 s (in the same scene, without requiring the same frame),
+    groups by (scene, egoVehicle, object) and creates events or actions.
     """
     select_query = f"""
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -1179,7 +1243,7 @@ ORDER BY ?scene ?egoVehicle ?obj ?frame
     if not res:
         return
 
-    # acumulamos por (scene, ego, obj) todos los (frame,ttc)
+    # accumulate all (frame, ttc) by (scene, ego, obj)
     from collections import defaultdict
     group_data: Dict[Tuple[str,str,str], List[Tuple[int,float]]] = defaultdict(list)
     for b in res["results"]["bindings"]:
@@ -1190,9 +1254,9 @@ ORDER BY ?scene ?egoVehicle ?obj ?frame
         ttc   = float(b["ttc"]["value"])
         group_data[(scene,ego,obj)].append((frame, ttc))
 
-    # para cada triple, creamos evento (1 frame) o acción (>1 frame)
+    # for each triple, create an event (1 frame) or an action (>1 frame)
     for (scene, ego, obj), records in group_data.items():
-        # ordena y separa frames únicos
+        # sort and separate unique frames
         records = sorted(set(records), key=lambda x: x[0])
         frames = [r[0] for r in records]
         ttc_map = {r[0]: r[1] for r in records}
@@ -1202,7 +1266,7 @@ ORDER BY ?scene ?egoVehicle ?obj ?frame
                 add_near_miss_event(scene, ego, obj, f0, ttc_map[f0])
             else:
                 start, end = block[0], block[-1]
-                # pasamos solo los ttc de ese bloque
+                # pass only the ttc values for that block
                 submap = {f: ttc_map[f] for f in block}
                 add_near_miss_action(scene, ego, obj, start, end, submap)
 
@@ -1371,28 +1435,217 @@ def handle_hard_brake_action_and_event():
                     add_hypotenuse(make_object_frame_iri(veh, f0), hyp_map[f0])
 
 
+def handle_hard_brake_with_pedestrian_crossing():
+    """
+    Detects hard brake + pedestrian on lane combinations.
+    Cases:
+      - Partial or full overlap: interval = [min(start), max(end)].
+      - No overlap, brake first and gap <= MAX_BRAKE_PED_GAP_FRAMES:
+        interval = [bStart, pEnd].
+    Selects the closest pedestrian by temporal gap (0 if they overlap).
+    Note: requires base events/actions already in GraphDB.
+    """
+    filter_str = add_scene_filter()
+    select_query = f"""
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX {pref_str}: <{ontology_uri}>
+    SELECT ?scene ?veh ?ped ?lane ?veh_lane ?bStart ?bEnd ?pStart ?pEnd
+    WHERE {{
+      ?scene rdf:type {pref_str}:scene .
+      {{
+        ?scene {pref_str}:hasEvent ?b .
+        ?b rdf:type {pref_str}:HardBrake ;
+           {pref_str}:framestamp ?bStart ;
+           {pref_str}:hasObject ?veh .
+        BIND(?bStart AS ?bEnd)
+      }} UNION {{
+        ?scene {pref_str}:hasAction ?b .
+        ?b rdf:type {pref_str}:BrakingHard ;
+           {pref_str}:start_framestamp ?bStart ;
+           {pref_str}:end_framestamp ?bEnd ;
+           {pref_str}:hasObject ?veh .
+      }}
+
+      {{
+        ?scene {pref_str}:hasEvent ?p .
+        ?p rdf:type {pref_str}:PedestrianOnLane ;
+           {pref_str}:framestamp ?pStart ;
+           {pref_str}:hasObject ?ped ;
+           {pref_str}:hasObject ?lane .
+        BIND(?pStart AS ?pEnd)
+      }} UNION {{
+        ?scene {pref_str}:hasAction ?p .
+        ?p rdf:type {pref_str}:PedestrianCrossingLane ;
+           {pref_str}:start_framestamp ?pStart ;
+           {pref_str}:end_framestamp ?pEnd ;
+           {pref_str}:hasObject ?ped ;
+           {pref_str}:hasObject ?lane .
+      }}
+
+      # Reference frame: first frame where both have already started
+      # ref = max(bStart, pStart)
+      BIND(IF(?bStart > ?pStart, ?bStart, ?pStart) AS ?ref)
+
+      # Vehicle and pedestrian in the same lane in the ref frame
+      ?veh {pref_str}:hasData ?od .
+      ?od rdf:type {pref_str}:ObjectData ;
+          {pref_str}:framestamp ?ref ;
+          {pref_str}:isLocatedIn ?veh_lane ;
+          {pref_str}:longitudinalPos ?veh_long .
+
+      ?ped {pref_str}:hasData ?pod .
+      ?pod rdf:type {pref_str}:ObjectData ;
+           {pref_str}:framestamp ?ref ;
+           {pref_str}:isLocatedIn ?lane ;
+           {pref_str}:longitudinalPos ?ped_long .
+
+      # Require the same lane
+      FILTER(?veh_lane = ?lane)
+
+      # Vehicle direction (derived from longitudinalPos) to decide "pedestrian ahead"
+      # 1) Change between bStart and bEnd (always recorded)
+      ?veh {pref_str}:hasData ?od_bstart .
+      ?od_bstart rdf:type {pref_str}:ObjectData ;
+                 {pref_str}:framestamp ?bStart ;
+                 {pref_str}:longitudinalPos ?veh_long_start .
+      ?veh {pref_str}:hasData ?od_bend .
+      ?od_bend rdf:type {pref_str}:ObjectData ;
+               {pref_str}:framestamp ?bEnd ;
+               {pref_str}:longitudinalPos ?veh_long_end .
+
+      # 2) Plan B: if the car hasn't moved and we don't know the direction from the event
+      BIND((?ref - 1) AS ?ref_prev)
+      BIND((?ref + 1) AS ?ref_next)
+      OPTIONAL {{
+        ?veh {pref_str}:hasData ?od_prev .
+        ?od_prev rdf:type {pref_str}:ObjectData ;
+                {pref_str}:framestamp ?ref_prev ;
+                {pref_str}:longitudinalPos ?veh_long_prev .
+      }}
+      OPTIONAL {{
+        ?veh {pref_str}:hasData ?od_next .
+        ?od_next rdf:type {pref_str}:ObjectData ;
+                {pref_str}:framestamp ?ref_next ;
+                {pref_str}:longitudinalPos ?veh_long_next .
+      }}
+      # Local longitudinalPos change around ref (ref-1 or ref+1)
+      BIND(
+        IF(BOUND(?veh_long_prev), (?veh_long - ?veh_long_prev),
+          IF(BOUND(?veh_long_next), (?veh_long_next - ?veh_long), 0)
+        ) AS ?dlong_local
+      )
+      # Main vehicle change: bStart/bEnd if valid, otherwise local change
+      BIND(
+        IF((?veh_long_end != ?veh_long_start),
+           (?veh_long_end - ?veh_long_start),
+           ?dlong_local
+        ) AS ?dlong
+      )
+      # Longitudinal difference at ref (pedestrian - vehicle)
+      BIND((?ped_long - ?veh_long) AS ?front_long)
+      # If the vehicle moves with increasing longitude, ped_long >= veh_long
+      # If it moves with decreasing longitude, ped_long <= veh_long
+      FILTER(
+        (?dlong > 0 && ?front_long >= 0) ||
+        (?dlong < 0 && ?front_long <= 0) ||
+        (?dlong = 0)
+      )
+
+      # Temporal overlap or allowed gap (brake before)
+      # gap = pStart - bEnd - 1
+      FILTER(
+        ( ?pStart <= ?bEnd && ?pEnd >= ?bStart ) ||
+        ( ?bEnd < ?pStart && (?pStart - ?bEnd - 1) <= {MAX_BRAKE_PED_GAP_FRAMES} )
+      )
+      {filter_str}
+    }}
+    ORDER BY ?scene ?veh ?bStart ?pStart
+    """
+
+    res = send_select_query(SPARQL_SELECT_ENDPOINT, select_query)
+    if not res:
+        return
+
+    grouped: Dict[Tuple[str, str, int, int], List[Tuple[int, int, str, str, str]]] = defaultdict(list)
+    for b in res["results"]["bindings"]:
+        scene = b["scene"]["value"]
+        veh = b["veh"]["value"]
+        ped = b["ped"]["value"]
+        lane = b["lane"]["value"]
+        veh_lane = b["veh_lane"]["value"]
+        b_start = int(float(b["bStart"]["value"]))
+        b_end = int(float(b["bEnd"]["value"]))
+        p_start = int(float(b["pStart"]["value"]))
+        p_end = int(float(b["pEnd"]["value"]))
+        key = (scene, veh, b_start, b_end)
+        grouped[key].append((p_start, p_end, ped, lane, veh_lane))
+
+    for (scene, veh, b_start, b_end), ped_list in grouped.items():
+        # Candidates for "associated pedestrian" for this hard brake
+        # Each candidate stores an ordering key and the final interval
+        candidates: List[Tuple[int, int, int, str, str, int, int]] = []
+
+        for p_start, p_end, ped, lane, veh_lane in ped_list:
+            # Is there temporal overlap between hard brake and crossing?
+            overlap = (p_start <= b_end and p_end >= b_start)
+            if overlap:
+                # Overlap case: the final interval is the union
+                start = min(b_start, p_start)
+                end = max(b_end, p_end)
+                gap = 0
+            else:
+                # No-overlap case: accept only if the brake happens before
+                # and the gap between them is small
+                gap = p_start - b_end - 1
+                if b_end < p_start and gap <= MAX_BRAKE_PED_GAP_FRAMES:
+                    start = b_start
+                    end = p_end
+                else:
+                    continue
+            # Ordering key:
+            # 1) smaller gap (0 if they overlap)
+            # 2) p_start closer to b_start
+            # 3) smaller p_start
+            candidates.append((gap, abs(p_start - b_start), p_start, ped, lane, start, end))
+
+        if not candidates:
+            continue
+
+        # Choose the "closest" candidate according to the ordering key
+        gap, _, p_start, ped, lane, start, end = min(
+            candidates, key=lambda t: (t[0], t[1], t[2], t[3])
+        )
+
+        if start == end:
+            add_hard_brake_with_ped_event(scene, veh, ped, lane, start)
+        else:
+            add_hard_brake_with_ped_action(scene, veh, ped, lane, start, end)
+
+
 def execute():
-    handle_normal_vehicle_lane_change()
+    # Base queries (needed before queries_extras.py)
     handle_pedestrian_on_lane_action_and_event()
-    handle_hard_acceleration_action_and_event()
-    handle_cut_in()
-    handle_cut_out_action_and_event()
     handle_hard_brake_action_and_event()
-    handle_following_action_and_event()
+
+    #handle_normal_vehicle_lane_change()
+    #handle_hard_acceleration_action_and_event()
+    #handle_cut_in()
+    #handle_cut_out_action_and_event()
+    #handle_following_action_and_event()
 
 
 ##############################################################################
-    #NO TENGO PASO DE CEBRA
+    #NO CROSSWALK AVAILABLE
     #handle_pedestrian_crosses_zebra_action_and_event()
 
-    #NO TENGO ROAD, solo va a lane la relacion de islocatedIn
+    #NO ROAD: isLocatedIn only points to lane
     #handle_pedestrian_crosses_road_action_and_event()
 
-    #NO TENGO TTC
+    #NO TTC
     #handle_near_miss_action_and_event()
 
 ##############################################################################
-    #FUTURO EGO
+    #FUTURE EGO
     #handle_hard_acceleration_action_and_event_ego()
     #handle_cut_in_ego()
     #handle_cut_out_action_and_event_ego() 
@@ -1400,19 +1653,11 @@ def execute():
     #handle_near_miss_action_and_event_ego()
     #handle_hard_brake_action_and_event_ego()
     
-    if len(graph):
-        output_file = read_params.get("outputs", {}).get("queries_file", "queries_Synergies.nt")
-        output_dir = os.path.dirname(output_file)
-        if output_dir:
-            os.makedirs(output_dir, exist_ok=True)
-        graph.serialize(
-        destination=output_file,
-        format="nt",
-        encoding="utf-8"
-        )
-        print(f"Tripletas serializadas en {output_file}")
-    else:
-        print("No se generaron tripletas.")
+    output_file = read_params.get("outputs", {}).get("queries_file")
+    if not output_file:
+        print("[ERROR] Missing outputs.queries_file in conf.yaml")
+        return
+    serialize_graph(output_file)
 
 if __name__ == "__main__":
     execute()
