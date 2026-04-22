@@ -1,19 +1,19 @@
-# omegaprime-scenario-extraction 
+# openlabel-scenario-extraction 
 
 This project runs a pipeline that:
 1) starts GraphDB (via Docker),
-2) creates the repository if needed,
-3) imports the ontology,
-4) converts VCD JSON files to RDF (Synergies.nq),
+2) creates the GraphDB repository if needed,
+3) imports our ontology to GraphDB,
+4) converts ASAM OpenLABEL JSON files (generated from OmegaPRIME) to RDF (Synergies.nq),
 5) detects events/actions with SPARQL (queries_Synergies.nt),
-6) optionally writes those actions/events back into VCD files.
+6) optionally writes those actions/events back into ASAM OpenLABEL files.
 
 ## Configuration (conf.yaml)
 Edit `conf.yaml` before running the pipeline if you need to change paths, ports, or repository names.
 
 - `ontology`: base URI, prefix, and the ontology file path.
-- `vcd.vcd_path`: input VCD folder (source JSON files).
-- `paths.output_dir`: output folder for VCDs with actions/events.
+- `vcd.vcd_path`: input ASAM OpenLABELs folder (source JSON files).
+- `paths.output_dir`: output folder for ASAM OpenLABELs with actions/events.
 - `database`: GraphDB connection (ip/port/repository).
 - `endpoint_url`: full GraphDB SPARQL endpoint.
 - `api`: optional class discovery API (used in preload).
@@ -35,7 +35,7 @@ The script will:
 6) pause and ask you to import `Synergies.nq` manually,
 7) run `queries.py` and generate `queries_Synergies.nt`,
 8) pause and ask you to import `queries_Synergies.nt` manually,
-9) ask if you want to export actions/events back to VCDs.
+9) ask if you want to export actions/events back to OpenLABEL.
 
 ## Preload mode prompt
 Before running `preload.py`, the script asks:
@@ -62,17 +62,17 @@ When the console tells you to import queries:
 
 ![Queries import](./assets/images/queries.png)
 
-## Export actions/events back to VCDs
+## Export actions/events back to OpenLABELs
 At the end, the pipeline asks:
 
 ```
-Do you want to export actions/events back to VCDs? [y/N]
+Do you want to export actions/events back to OpenLABELs? [y/N]
 ```
 
 If you answer **yes**, it will create the output files in the folder from:
-`conf.yaml -> paths.output_dir` (default: `./vcds_pruebas_con_acciones_y_eventos/`).
+`conf.yaml -> paths.output_dir` (default: `./output_openlabels/`).
 
-This will read the RDF in GraphDB and write the enriched VCDs into `paths.output_dir`.
+This will read the RDF in GraphDB and write the enriched OpenLABELs into `paths.output_dir`.
 
 ## Re-run only part of the pipeline (examples)
 You can skip steps if you only want to repeat a part:
@@ -89,7 +89,7 @@ You can skip steps if you only want to repeat a part:
   ```powershell
   python .\run_pipeline.py --no-docker
   ```
-- Only export VCDs (no pipeline, just write actions/events):
+- Only export OpenLABELs (no pipeline, just write actions/events):
   ```powershell
   python .\graphdb_to_vcd_parser.py
   ```

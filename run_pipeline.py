@@ -346,15 +346,15 @@ def main() -> int:
         print("[OK] Queries step verified by user.")
         parser_path = root / "graphdb_to_vcd_parser.py"
         if parser_path.exists():
-            resp = input("Do you want to export actions/events back to VCDs? [y/N]: ").strip().lower()
+            resp = input("Do you want to export actions/events back to OpenLABELs? [y/N]: ").strip().lower()
             if resp in ("y", "yes"):
                 print("\n--- Running graphdb_to_vcd_parser.py ---")
                 run_cmd([sys.executable, str(parser_path)], cwd=root)
-                print("[OK] VCD export completed.")
+                print("[OK] OpenLABEL export completed.")
             else:
-                print("Skipping VCD export.")
+                print("Skipping OpenLABEL export.")
         else:
-            print("[WARN] graphdb_to_vcd_parser.py not found; skipping VCD export.")
+            print("[WARN] graphdb_to_vcd_parser.py not found; skipping OpenLABEL export.")
 
     print("\nPipeline finished successfully")
     return 0
