@@ -33,10 +33,10 @@ api:
   ontology_uri: "http://www.semanticweb.org/vicomtech/ontologies/synergies#"
   graphdb_url: "http://graphdb:7200"
 
-################################ CLASES, RELACIONES, ATRIBUTOS ############################
+################################ CLASSES, RELATIONS, ATTRIBUTES ############################
 
 
-#PUEDE NO ESTAR
+#MAY NOT BE PRESENT
 ego_vehicle:
   ego_vehicle_name : ego_vehicle
   ego_rotation: ego_rotation
@@ -64,7 +64,7 @@ relations:
   hasUIDinVCD: hasUIDinVCD
 
 
-#PUEDE NO ESTAR
+#MAY NOT BE PRESENT
 attributes_to_include:
   text: ["attr", "visibility"]
   num: ["velocity", "distance_to_ego", "TTC" , "longitudinalPos" , "lateralPos"]
@@ -73,18 +73,18 @@ attributes_to_include:
   vec: ["velocity_vector", "acceleration_vector", "rotation_rate"]
   boolean: ["front_of_ego", "rear_of_ego", "left_of_ego", "right_of_ego", "ego_following"]
 
-#PUEDE NO ESTAR
+#MAY NOT BE PRESENT
 special_attributes:
   ego_following: ego_following
 
-#PUEDE NO ESTAR
+#MAY NOT BE PRESENT
 data_to_omit:
   CAN: ["steer_angle", "available_distance", "battery_level", "brake_switch", "gear_position", "left_signal", "rear_left_rpm", "rear_right_rpm", "right_signal", "steering", "steering_speed", "utime", "vehicle_speed", "FL_wheel_speed", "FR_wheel_speed", "RL_wheel_speed", "RR_wheel_speed", "left_solar", "longitudinal_accel", "meanEffTorque", "odom", "odom_speed", "pedal_cc", "regen", "requestedTorqueAfterProc", "right_solar", "steer_corrected", "steer_offset_can", "steer_raw", "transversal_accel"]
   IMU: ["linear_accel", "q", "rotation_rate", "utime"]
   ZOE: ["brake_sensor", "steering_sensor", "throttle_sensor", "utime"]
   static_relations: ["hasIncomingLane", "hasOutgoingLane"]
 
-#PUEDE NO ESTAR
+#MAY NOT BE PRESENT
 thresholds:
   acceleration: 2.5
   brake: 3
