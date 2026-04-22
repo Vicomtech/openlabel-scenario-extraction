@@ -1,4 +1,4 @@
-# Omegaprime-scenario-extraction - PIPELINE
+# omegaprime-scenario-extraction 
 
 This project runs a pipeline that:
 1) starts GraphDB (via Docker),
@@ -93,3 +93,21 @@ You can skip steps if you only want to repeat a part:
   ```powershell
   python .\graphdb_to_vcd_parser.py
   ```
+  
+## Acknowledgements
+![synergies.svg](assets/images/synergies.svg)
+This package is developed as part of the [SYNERGIES project](https://synergies-ccam.eu/) and is funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or European Climate, Infrastructure and Environment Executive Agency (CINEA). Neither the European Union nor the granting authority can be held responsible for them.
+
+![funded_by_eu.svg](assets/images/funded_by_eu.svg)
+
+## License  
+[![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
+
+This work is licensed under a
+[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa].
+
+[![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]
+
+[cc-by-nc-sa]: http://creativecommons.org/licenses/by-nc-sa/4.0/
+[cc-by-nc-sa-image]: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
+[cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
