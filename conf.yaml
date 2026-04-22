@@ -6,11 +6,11 @@ ontology:
 
 vcd: 
   #vcd_path: "./vcds_pruebas/"
-  vcd_path: "./vcds_pruebas/"
+  vcd_path: "./input_vcds/"
 
 paths:
   #output_dir: "./vcds_pruebas_con_acciones_y_eventos/"
-  output_dir: "./vcds_pruebas_output/"
+  output_dir: "./output_vcds/"
 
 outputs:
   nq_file: "Synergies.nq"
