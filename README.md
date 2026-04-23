@@ -1,3 +1,5 @@
+<img src="assets/images/openlabel-scenario-extraction-logo.png" align="right" width="150" alt="Logo">
+
 # openlabel-scenario-extraction 
 
 This project runs a pipeline that:

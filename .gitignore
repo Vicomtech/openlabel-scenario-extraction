@@ -6,3 +6,7 @@ vcds_pruebas_con_acciones_y_eventos/
 weblabel/
 openlabels_partners_output/
 openlabels_partners/
+input_openlabels/
+output_openlabels/
+tmp_queries/
+.idea/
