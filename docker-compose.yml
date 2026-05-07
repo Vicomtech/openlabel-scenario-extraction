@@ -3,7 +3,7 @@ version: "3.9"
 services:
   graphdb:
     image: khaller/graphdb-free:10.8.0
-    container_name: graphdb-aescribano
+    container_name: graphdb-synergies
     ports:
       - "7600:7200"
     restart: always

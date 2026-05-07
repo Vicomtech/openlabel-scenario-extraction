@@ -55,7 +55,7 @@ omit_relations = read_params.get("data_to_omit", {}).get("static_relations", [])
 ds = Dataset()
 ds.bind(pref, ns)
 ds.bind("rdf", Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
-# Disable the global in-memory dataset to avoid accumulating triples across files.
+# Disable the global in-memory SSD_dataset to avoid accumulating triples across files.
 USE_GLOBAL_DATASET = False
 
 # Metrics
@@ -224,9 +224,9 @@ def fetch_categories():
                 if Mov and Mov in parents:
                     categories["movable"].add(details["Name"])
         else:
-            print(f"Error al obtener categorías: {response.status_code}")
+            print(f"Error Obtaining categories: {response.status_code}")
     except requests.exceptions.RequestException as e:
-        print(f"Error al conectar con la API: {e}")
+        print(f"Error connecting to the API: {e}")
     return categories
 
 
@@ -267,7 +267,7 @@ def process_vcd(v):
     zoe = True
 
     # Load VCD
-    print(f"\nProcesando archivo VCD: {v}")
+    print(f"\nProcessing input OpenLABEL: {v}")
     myVCD = core.VCD()
     myVCD.load_from_file(os.path.join(path_to_vcd, v))
 
@@ -390,7 +390,7 @@ def process_vcd(v):
                     scene_relations[instance_name][hasOutgoingLane_relation] = []
 
         else:
-            print(f"Advertencia: Tipo de objeto estático desconocido '{instance_type}'. No se procesará.")
+            print(f"Warning: Static object of type '{instance_type}' is unknown. It won't be processed.")
 
     if enable_is_part_of:
         def _extract_section_name(name: str) -> Optional[str]:
@@ -666,7 +666,7 @@ def process_vcd(v):
     return tmp_file, metrics
 
 def merge_results(queue):
-    """Function to merge scene fragments from a multiprocessing queue into the global dataset."""
+    """Function to merge scene fragments from a multiprocessing queue into the global SSD_dataset."""
     if not USE_GLOBAL_DATASET:
         return
     global ds
@@ -735,7 +735,7 @@ if __name__ == '__main__':
 
     write_metrics_csv(metrics_rows)
 
-    print(f"Dataset serializado en {output_file}")
+    print(f"Dataset serialized in {output_file}")
     print('It took', time.time() - start_script, 'seconds.')
     print('All temporary files have been removed.')
 
