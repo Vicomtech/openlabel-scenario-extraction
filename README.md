@@ -10,6 +10,10 @@ This project runs a pipeline that:
 5) detects events/actions with SPARQL (queries_Synergies.nt),
 6) optionally writes those actions/events back into ASAM OpenLABEL files.
 
+## Prerequisites
+- Docker
+- Python 3.9+
+
 ## Configuration (conf.yaml)
 Edit `conf.yaml` before running the pipeline if you need to change paths, ports, or repository names.
 
